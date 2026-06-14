@@ -11,13 +11,13 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module
-import org.koin.core.annotation.Singleton
+import org.koin.core.annotation.Single
 
 @Module
 @ComponentScan("com.devscion.chapterstage")
 class AppModule {
-    @Singleton
-    fun provideHttpClient() = HttpClient() {
+    @Single
+    fun provideHttpClient(): HttpClient = HttpClient {
         install(ContentNegotiation) {
             json(Json {
                 ignoreUnknownKeys = true
@@ -35,7 +35,7 @@ class AppModule {
 
 //    Following Pattern should be followed for prod and development environment's repos. In development mode we use mock data for quick prototyping and simulating the UI
 //    Production repos have actual api calls and other related logic
-//    @Singleton
+//    @Single
 //    fun provideAuthRepository(authApiService: AuthApiService): AuthRepository =
 //        if (AppFlavor.USE_MOCK_DATA) MockAuthRepository()
 //        else AuthRepositoryImpl(authApiService)

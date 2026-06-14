@@ -100,6 +100,7 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
+            implementation(libs.compose.animation)
             implementation(libs.compose.material3)
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
@@ -110,6 +111,7 @@ kotlin {
             //Koin
             implementation(libs.koin.core)
             implementation(libs.koin.annotations)
+            implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
             implementation(libs.koin.compose.viewmodel.navigation)
 
@@ -117,6 +119,7 @@ kotlin {
             implementation(libs.navigation.compose)
             //Serialization
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.coroutines.core)
 
             // Ktor Client
             implementation(libs.ktor.client.core)
