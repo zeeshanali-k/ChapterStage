@@ -7,5 +7,5 @@ import org.koin.core.annotation.KoinApplication
     modules = [AppModule::class],
     configurations = []
 )
-@ComponentScan("com.devscion.auditforge")
+@ComponentScan("com.devscion.chapterstage")
 class ChapterStageKoinApp
