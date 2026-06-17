@@ -174,7 +174,11 @@ internal fun CreateGuidanceCard(
     canContinue: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    StageCard(modifier = modifier, accent = MaterialTheme.stageColors.cyan) {
+    StageCard(
+        modifier = modifier,
+        accent = MaterialTheme.stageColors.cyan,
+        sharedKey = "chapterstage-primary-panel",
+    ) {
         StageLabel(text = "SOURCE CHECK", dotColor = if (canContinue) MaterialTheme.stageColors.success else null)
         Text(
             modifier = Modifier.padding(top = MaterialTheme.spacing.medium),
@@ -210,8 +214,8 @@ private fun UseSampleChip(
             .clip(MaterialTheme.shapes.small)
             .clickable(onClick = onClick),
         shape = MaterialTheme.shapes.small,
-        color = MaterialTheme.stageColors.primary.copy(alpha = 0.14f),
-        border = BorderStroke(1.dp, MaterialTheme.stageColors.primary.copy(alpha = 0.3f)),
+        color = MaterialTheme.stageColors.primary.copy(alpha = 0.18f),
+        border = BorderStroke(1.dp, MaterialTheme.stageColors.primary.copy(alpha = 0.42f)),
     ) {
         Text(
             modifier = Modifier.padding(
@@ -237,7 +241,7 @@ private fun UploadDropZone(
             .fillMaxWidth()
             .height(220.dp)
             .clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.stageColors.surface)
+            .background(MaterialTheme.stageColors.glassSurface)
             .border(BorderStroke(1.dp, MaterialTheme.stageColors.lineHigh), MaterialTheme.shapes.large)
             .clickable(enabled = !isPickingFile, onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -289,7 +293,11 @@ private fun SelectedFileCard(
         ) {
             StageIconBadge(
                 text = extensionLabel,
-                color = if (extensionLabel == "PDF") MaterialTheme.stageColors.error else MaterialTheme.stageColors.cyan,
+                color = if (extensionLabel == "PDF") {
+                    MaterialTheme.stageColors.error
+                } else {
+                    MaterialTheme.stageColors.cyan
+                },
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -323,7 +331,7 @@ private fun FileTypeChip(
         modifier = modifier,
         shape = MaterialTheme.shapes.small,
         color = MaterialTheme.stageColors.surfaceHigh,
-        border = BorderStroke(1.dp, MaterialTheme.stageColors.line),
+        border = BorderStroke(1.dp, MaterialTheme.stageColors.lineHigh),
     ) {
         Text(
             modifier = Modifier.padding(

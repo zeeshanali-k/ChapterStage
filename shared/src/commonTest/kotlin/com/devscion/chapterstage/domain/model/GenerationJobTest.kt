@@ -6,7 +6,7 @@ import kotlin.test.assertTrue
 
 class GenerationJobTest {
     @Test
-    fun `given failed status variant, when checking terminal, then job is terminal`() {
+    fun `given failed status variant when checking terminal then job is terminal`() {
         val job = generationJob(status = "failed_validation")
 
         assertTrue(job.isTerminal)
@@ -14,7 +14,7 @@ class GenerationJobTest {
     }
 
     @Test
-    fun `given running status, when checking terminal, then job is not terminal`() {
+    fun `given running status when checking terminal then job is not terminal`() {
         val job = generationJob(status = "running")
 
         assertFalse(job.isTerminal)

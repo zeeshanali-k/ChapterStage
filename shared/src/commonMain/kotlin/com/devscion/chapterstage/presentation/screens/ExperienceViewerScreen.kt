@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.devscion.chapterstage.design.ChapterStageTheme
 import com.devscion.chapterstage.design.stageColors
@@ -32,7 +33,20 @@ fun ExperienceViewerScreen(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    listOf(MaterialTheme.stageColors.backgroundHigh, MaterialTheme.stageColors.background),
+                    listOf(
+                        MaterialTheme.stageColors.backgroundHigh,
+                        MaterialTheme.stageColors.background,
+                        MaterialTheme.stageColors.backgroundLow,
+                    ),
+                ),
+            )
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        MaterialTheme.stageColors.primary.copy(alpha = 0.1f),
+                        Color.Transparent,
+                        MaterialTheme.stageColors.violet.copy(alpha = 0.08f),
+                    ),
                 ),
             )
             .windowInsetsPadding(WindowInsets.safeDrawing),

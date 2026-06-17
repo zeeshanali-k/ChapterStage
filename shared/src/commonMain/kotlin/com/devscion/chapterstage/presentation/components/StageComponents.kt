@@ -77,6 +77,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.devscion.chapterstage.design.stageSharedBounds
+import com.devscion.chapterstage.design.stageSharedElement
 import com.devscion.chapterstage.design.stageColors
 import com.devscion.chapterstage.design.spacing
 import com.devscion.chapterstage.presentation.model.AgentStatus
@@ -113,7 +115,16 @@ fun StageScreen(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(colors.backgroundHigh, colors.background),
+                    colors = listOf(colors.backgroundHigh, colors.background, colors.backgroundLow),
+                ),
+            )
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(
+                        colors.primary.copy(alpha = 0.12f),
+                        Color.Transparent,
+                        colors.violet.copy(alpha = 0.08f),
+                    ),
                 ),
             )
             .windowInsetsPadding(WindowInsets.safeDrawing),
@@ -155,13 +166,16 @@ fun StageCard(
     modifier: Modifier = Modifier,
     accent: Color? = null,
     onClick: (() -> Unit)? = null,
+    sharedKey: String? = null,
     contentPadding: PaddingValues = PaddingValues(MaterialTheme.spacing.medium),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = MaterialTheme.stageColors
-    val borderColor = accent?.copy(alpha = 0.42f) ?: colors.line
+    val borderColor = accent?.copy(alpha = 0.5f) ?: colors.lineHigh
     val shape = MaterialTheme.shapes.extraLarge
+    val highlightColor = accent?.copy(alpha = 0.28f) ?: colors.glassHighlight
     val cardModifier = modifier
+        .stageSharedBounds(sharedKey = sharedKey, shape = shape)
         .clip(shape)
         .animateContentSize(animationSpec = spring())
         .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
@@ -169,7 +183,7 @@ fun StageCard(
     Card(
         modifier = cardModifier,
         shape = shape,
-        colors = CardDefaults.cardColors(containerColor = colors.surface),
+        colors = CardDefaults.cardColors(containerColor = colors.glassSurface),
         border = BorderStroke(1.dp, borderColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
@@ -180,14 +194,39 @@ fun StageCard(
                 .background(
                     if (accent != null) {
                         Brush.verticalGradient(
-                            listOf(accent.copy(alpha = 0.12f), Color.Transparent),
+                            listOf(
+                                colors.glassHighlight,
+                                accent.copy(alpha = 0.11f),
+                                colors.glassSurface.copy(alpha = 0.64f),
+                                colors.glassShadow.copy(alpha = 0.36f),
+                            ),
                         )
                     } else {
-                        Brush.verticalGradient(listOf(Color.Transparent, Color.Transparent))
+                        Brush.verticalGradient(
+                            listOf(
+                                colors.glassHighlight,
+                                colors.glassSurface.copy(alpha = 0.72f),
+                                colors.glassShadow.copy(alpha = 0.28f),
+                            ),
+                        )
                     },
                 )
                 .padding(contentPadding),
         ) {
+//            Canvas(modifier = Modifier.fillMaxSize()) {
+//                drawLine(
+//                    color = Color.White.copy(alpha = 0.22f),
+//                    start = Offset(1.dp.toPx(), 0f),
+//                    end = Offset(size.width - 1.dp.toPx(), 0f),
+//                    strokeWidth = 1.dp.toPx(),
+//                )
+//                drawLine(
+//                    color = highlightColor,
+//                    start = Offset(0f, size.height),
+//                    end = Offset(size.width, size.height),
+//                    strokeWidth = 1.dp.toPx(),
+//                )
+//            }
             Column(content = content)
         }
     }
@@ -363,17 +402,18 @@ fun StageButton(
     large: Boolean = false,
     leadingText: String? = null,
     trailingText: String? = null,
+    sharedKey: String? = null,
 ) {
     val colors = MaterialTheme.stageColors
     val buttonColors = when (variant) {
         StageButtonVariant.Primary -> ButtonDefaults.buttonColors(
-            containerColor = colors.primary,
-            contentColor = Color.White,
+            containerColor = colors.primary.copy(alpha = 0.92f),
+            contentColor = colors.background,
             disabledContainerColor = colors.primary.copy(alpha = 0.42f),
-            disabledContentColor = Color.White.copy(alpha = 0.54f),
+            disabledContentColor = colors.background.copy(alpha = 0.54f),
         )
         StageButtonVariant.Ghost -> ButtonDefaults.buttonColors(
-            containerColor = Color.White.copy(alpha = 0.04f),
+            containerColor = Color.White.copy(alpha = 0.07f),
             contentColor = colors.textPrimary,
             disabledContainerColor = Color.White.copy(alpha = 0.03f),
             disabledContentColor = colors.textTertiary,
@@ -391,18 +431,26 @@ fun StageButton(
             disabledContentColor = colors.error.copy(alpha = 0.48f),
         )
     }
+    val buttonBorderColor = when (variant) {
+        StageButtonVariant.Primary -> Color.White.copy(alpha = 0.36f)
+        StageButtonVariant.Ghost -> colors.lineHigh
+        StageButtonVariant.Soft -> colors.primary.copy(alpha = 0.42f)
+        StageButtonVariant.Danger -> colors.error.copy(alpha = 0.36f)
+    }
 
     val shape = if (large) MaterialTheme.shapes.extraLarge else MaterialTheme.shapes.large
 
     Button(
         onClick = onClick,
         modifier = modifier
+            .stageSharedBounds(sharedKey = sharedKey, shape = shape, zIndexInOverlay = 2f)
             .height(if (large) 56.dp else 50.dp)
             .clip(shape)
             .animateContentSize(animationSpec = spring()),
         enabled = enabled,
         shape = shape,
         colors = buttonColors,
+        border = BorderStroke(1.dp, buttonBorderColor),
         elevation = ButtonDefaults.buttonElevation(
             defaultElevation = 0.dp,
             pressedElevation = 0.dp,
@@ -410,7 +458,9 @@ fun StageButton(
             hoveredElevation = 0.dp,
             disabledElevation = 0.dp,
         ),
-        contentPadding = PaddingValues(horizontal = if (large) MaterialTheme.spacing.large else MaterialTheme.spacing.medium),
+        contentPadding = PaddingValues(
+            horizontal = if (large) MaterialTheme.spacing.large else MaterialTheme.spacing.medium,
+        ),
     ) {
         if (leadingText != null) {
             Text(
@@ -450,8 +500,8 @@ fun BackButton(
             .clip(shape)
             .clickable(onClick = onClick),
         shape = shape,
-        color = Color.White.copy(alpha = 0.04f),
-        border = BorderStroke(1.dp, colors.line),
+        color = colors.surfaceElement,
+        border = BorderStroke(1.dp, colors.lineHigh),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
@@ -479,7 +529,7 @@ fun StageTopBar(
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
     ) {
         when {
-            showLogo -> ChapterStageLogo()
+            showLogo -> ChapterStageLogo(sharedKey = "chapterstage-logo")
             onBack != null -> BackButton(onClick = onBack)
         }
 
@@ -512,11 +562,15 @@ fun StageTopBar(
 fun ChapterStageLogo(
     modifier: Modifier = Modifier,
     compact: Boolean = false,
+    sharedKey: String? = null,
 ) {
     val colors = MaterialTheme.stageColors
 
     Row(
-        modifier = modifier,
+        modifier = modifier.stageSharedElement(
+            sharedKey = sharedKey,
+            shape = MaterialTheme.shapes.medium,
+        ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
     ) {
@@ -538,7 +592,11 @@ fun ChapterStageLogo(
                 )
             }
             points.forEach { (point, color) ->
-                drawCircle(color = color, radius = if (point == center) 3.2.dp.toPx() else 1.8.dp.toPx(), center = point)
+                drawCircle(
+                    color = color,
+                    radius = if (point == center) 3.2.dp.toPx() else 1.8.dp.toPx(),
+                    center = point,
+                )
             }
         }
         Text(
@@ -566,8 +624,12 @@ fun StageIconBadge(
         modifier = modifier
             .size(42.dp)
             .clip(MaterialTheme.shapes.medium)
-            .background(color.copy(alpha = 0.12f))
-            .border(BorderStroke(1.dp, color.copy(alpha = 0.32f)), MaterialTheme.shapes.medium),
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color.White.copy(alpha = 0.1f), color.copy(alpha = 0.13f)),
+                ),
+            )
+            .border(BorderStroke(1.dp, color.copy(alpha = 0.38f)), MaterialTheme.shapes.medium),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -613,9 +675,9 @@ fun StageTextField(
             focusedTextColor = colors.textPrimary,
             unfocusedTextColor = colors.textPrimary,
             focusedBorderColor = colors.primary.copy(alpha = 0.68f),
-            unfocusedBorderColor = colors.line,
-            focusedContainerColor = Color.White.copy(alpha = 0.03f),
-            unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
+            unfocusedBorderColor = colors.lineHigh,
+            focusedContainerColor = Color.White.copy(alpha = 0.08f),
+            unfocusedContainerColor = Color.White.copy(alpha = 0.05f),
             cursorColor = colors.primary,
         ),
     )
@@ -664,8 +726,8 @@ fun SegmentedControl(
         modifier = modifier
             .fillMaxWidth()
             .clip(containerShape)
-            .background(Color.White.copy(alpha = 0.04f))
-            .border(BorderStroke(1.dp, colors.line), containerShape)
+            .background(Color.White.copy(alpha = 0.07f))
+            .border(BorderStroke(1.dp, colors.lineHigh), containerShape)
             .padding(MaterialTheme.spacing.extraSmall),
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.extraSmall),
     ) {
@@ -720,7 +782,7 @@ fun PillGroup(
             val isSelected = option == selected
             val shape = MaterialTheme.shapes.medium
             val containerColor by animateColorAsState(
-                targetValue = if (isSelected) colors.primary.copy(alpha = 0.18f) else Color.White.copy(alpha = 0.03f),
+                targetValue = if (isSelected) colors.primary.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.06f),
                 animationSpec = tween(durationMillis = 180),
                 label = "PillBackground",
             )
@@ -776,7 +838,7 @@ fun StageSwitch(
             checkedThumbColor = Color.White,
             checkedTrackColor = colors.primary,
             uncheckedThumbColor = colors.textSecondary,
-            uncheckedTrackColor = Color.White.copy(alpha = 0.12f),
+            uncheckedTrackColor = Color.White.copy(alpha = 0.16f),
             uncheckedBorderColor = colors.lineHigh,
         ),
     )
@@ -861,7 +923,11 @@ fun AgentAvatar(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(CircleShape)
-                .background(agent.color.copy(alpha = avatarAlpha))
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color.White.copy(alpha = 0.12f), agent.color.copy(alpha = avatarAlpha)),
+                    ),
+                )
                 .border(BorderStroke(ringWidth, animatedRingColor), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
@@ -876,8 +942,10 @@ fun AgentAvatar(
 
         AnimatedVisibility(
             visible = status == AgentStatus.Completed,
-            enter = scaleIn(animationSpec = spring()) + fadeIn(animationSpec = tween(durationMillis = 140)),
-            exit = scaleOut(animationSpec = tween(durationMillis = 120)) + fadeOut(animationSpec = tween(durationMillis = 120)),
+            enter = scaleIn(animationSpec = spring()) +
+                fadeIn(animationSpec = tween(durationMillis = 140)),
+            exit = scaleOut(animationSpec = tween(durationMillis = 120)) +
+                fadeOut(animationSpec = tween(durationMillis = 120)),
             modifier = Modifier.align(Alignment.BottomEnd),
         ) {
             Box(
@@ -923,8 +991,8 @@ fun BandRoomBadge(
     Row(
         modifier = modifier
             .clip(CircleShape)
-            .background(badgeColor.copy(alpha = 0.1f))
-            .border(BorderStroke(1.dp, badgeColor.copy(alpha = 0.28f)), CircleShape)
+            .background(badgeColor.copy(alpha = 0.14f))
+            .border(BorderStroke(1.dp, badgeColor.copy(alpha = 0.34f)), CircleShape)
             .padding(horizontal = MaterialTheme.spacing.small, vertical = MaterialTheme.spacing.small),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
@@ -971,7 +1039,7 @@ fun StageProgressBar(
             .height(7.dp)
             .clip(CircleShape),
         color = color,
-        trackColor = Color.White.copy(alpha = 0.08f),
+        trackColor = Color.White.copy(alpha = 0.12f),
     )
 }
 
@@ -1136,8 +1204,8 @@ fun TraceEventRow(
                         .padding(top = MaterialTheme.spacing.small)
                         .fillMaxWidth(),
                     shape = MaterialTheme.shapes.small,
-                    color = Color.White.copy(alpha = 0.03f),
-                    border = BorderStroke(1.dp, colors.line),
+                    color = Color.White.copy(alpha = 0.07f),
+                    border = BorderStroke(1.dp, colors.lineHigh),
                 ) {
                     Text(
                         modifier = Modifier.padding(
@@ -1193,9 +1261,9 @@ fun PlanetSystemArtwork(
         val planets = listOf(
             Triple(Offset(size.width * 0.5f, size.height * 0.15f), 22.dp.toPx(), colors.warning),
             Triple(Offset(size.width * 0.84f, size.height * 0.38f), 21.dp.toPx(), colors.cyan),
-            Triple(Offset(size.width * 0.73f, size.height * 0.77f), 19.dp.toPx(), Color(0xFF7894FF)),
-            Triple(Offset(size.width * 0.27f, size.height * 0.77f), 30.dp.toPx(), Color(0xFFD19064)),
-            Triple(Offset(size.width * 0.16f, size.height * 0.38f), 20.dp.toPx(), Color(0xFF8FE0E2)),
+            Triple(Offset(size.width * 0.73f, size.height * 0.77f), 19.dp.toPx(), colors.violet),
+            Triple(Offset(size.width * 0.27f, size.height * 0.77f), 30.dp.toPx(), colors.pink),
+            Triple(Offset(size.width * 0.16f, size.height * 0.38f), 20.dp.toPx(), colors.primary),
         )
 
         planets.forEach { (planetCenter, radius, color) ->
@@ -1226,7 +1294,7 @@ fun PlanetSystemArtwork(
 
         drawRoundRect(
             brush = Brush.linearGradient(
-                colors = listOf(Color(0xFF8B6BFF), Color(0xFF5B7BFF)),
+                colors = listOf(colors.primary, colors.cyan, colors.violet),
                 start = center - Offset(26.dp.toPx(), 26.dp.toPx()),
                 end = center + Offset(26.dp.toPx(), 26.dp.toPx()),
             ),
@@ -1246,8 +1314,8 @@ fun PlanetSystemArtwork(
 
 private fun eventAccentColor(event: TraceEventUiModel, agentColor: Color): Color =
     when (event.type) {
-        "Verified", "Selected" -> Color(0xFF2EE59D)
-        "Rejected" -> Color(0xFFFF5C7A)
-        "Published" -> Color(0xFF7C5CFF)
+        "Verified", "Selected" -> Color(0xFF62E6A8)
+        "Rejected" -> Color(0xFFFF6C8F)
+        "Published" -> Color(0xFF7BE0C3)
         else -> agentColor
     }

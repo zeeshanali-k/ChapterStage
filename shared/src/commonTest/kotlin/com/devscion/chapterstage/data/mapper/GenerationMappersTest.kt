@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
 
 class GenerationMappersTest {
     @Test
-    fun `given backend job progress fraction, when mapped, then ui percent is used`() {
+    fun `given backend job progress fraction when mapped then ui percent is used`() {
         val response = GenerationJobResponse(
             jobId = "job-1",
             chapterId = "chapter-1",
@@ -30,7 +30,7 @@ class GenerationMappersTest {
     }
 
     @Test
-    fun `given backend recent job row, when mapped, then completed job keeps viewer data`() {
+    fun `given backend recent job row when mapped then completed job keeps viewer data`() {
         val row = RecentGenerationJobDto(
             jobId = "job-123456789",
             chapterId = "chapter-1",
@@ -52,7 +52,7 @@ class GenerationMappersTest {
     }
 
     @Test
-    fun `given trace payload object, when mapped, then payload is previewable text`() {
+    fun `given trace payload object when mapped then payload is previewable text`() {
         val dto = AgentTraceEventDto(
             id = "event-1",
             agentName = "structure",

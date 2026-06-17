@@ -6,7 +6,7 @@ import kotlin.test.assertNull
 
 class ServerSentEventParserTest {
     @Test
-    fun `given multiline event, when blank line arrives, then event is emitted`() {
+    fun `given multiline event when blank line arrives then event is emitted`() {
         val parser = ServerSentEventParser()
 
         assertNull(parser.accept("event: progress"))
@@ -22,7 +22,7 @@ class ServerSentEventParserTest {
     }
 
     @Test
-    fun `given comment line, when accepted, then parser ignores it`() {
+    fun `given comment line when accepted then parser ignores it`() {
         val parser = ServerSentEventParser()
 
         assertNull(parser.accept(": heartbeat"))

@@ -45,7 +45,7 @@ fun SplashScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             PlanetSystemArtwork()
-            ChapterStageLogo()
+            ChapterStageLogo(sharedKey = "chapterstage-logo")
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
             Text(
                 text = "Books become\ninteractive lessons",
@@ -61,10 +61,17 @@ fun SplashScreen(
                 ),
                 text = buildAnnotatedString {
                     append("Powered by ")
-                    withStyle(SpanStyle(color = MaterialTheme.stageColors.primaryText, fontWeight = FontWeight.SemiBold)) {
+                    withStyle(
+                        SpanStyle(
+                            color = MaterialTheme.stageColors.primaryText,
+                            fontWeight = FontWeight.SemiBold,
+                        ),
+                    ) {
                         append("Band")
                     }
-                    append(" multi-agent collaboration - a studio of specialists that build a chapter experience for you.")
+                    append(
+                        " multi-agent collaboration - a studio of specialists that build a chapter experience for you.",
+                    )
                 },
                 color = MaterialTheme.stageColors.textSecondary,
                 style = MaterialTheme.typography.bodyLarge,
@@ -77,6 +84,7 @@ fun SplashScreen(
                 onClick = onCreateChapter,
                 large = true,
                 trailingText = "->",
+                sharedKey = "chapterstage-primary-action",
             )
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
             StageButton(
@@ -100,4 +108,3 @@ private fun SplashScreenPreview() {
         )
     }
 }
-

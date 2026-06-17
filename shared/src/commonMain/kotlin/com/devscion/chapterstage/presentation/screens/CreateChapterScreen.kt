@@ -155,6 +155,7 @@ fun CreateChapterScreen(
             enabled = canContinue && !isPickingFile,
             large = true,
             trailingText = "->",
+            sharedKey = "chapterstage-primary-action",
         )
     }
 }

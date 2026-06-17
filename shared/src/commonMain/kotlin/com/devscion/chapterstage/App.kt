@@ -2,6 +2,8 @@ package com.devscion.chapterstage
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -17,6 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.devscion.chapterstage.design.ChapterStageTheme
+import com.devscion.chapterstage.design.StageSharedMotionProvider
 import com.devscion.chapterstage.di.AppModule
 import com.devscion.chapterstage.di.module as appModule
 import com.devscion.chapterstage.navigation.AgentTraceRoute
@@ -56,6 +59,7 @@ fun App() {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ChapterStageApp() {
     val navController = rememberNavController()
@@ -77,115 +81,156 @@ private fun ChapterStageApp() {
         }
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = SplashRoute,
-        enterTransition = { stageEnterTransition(forward = true) },
-        exitTransition = { stageExitTransition(forward = true) },
-        popEnterTransition = { stageEnterTransition(forward = false) },
-        popExitTransition = { stageExitTransition(forward = false) },
-    ) {
-        composable<SplashRoute> {
-            SplashScreen(
-                onCreateChapter = {
-                    viewModel.onAction(ChapterStageAction.NavigateCreateChapter)
-                },
-                onViewDemo = {
-                    viewModel.onAction(ChapterStageAction.StartDemoFlow)
-                },
-            )
-        }
-        composable<HomeRoute> {
-            HomeScreen(
-                recentJobs = state.recentJobs,
-                isLoading = state.isHomeLoading,
-                errorMessage = state.homeErrorMessage,
-                onCreateChapter = { viewModel.onAction(ChapterStageAction.NavigateCreateChapter) },
-                onOpenRecentJob = { job ->
-                    viewModel.onAction(ChapterStageAction.OpenRecentJob(job))
-                },
-                onRetryRecentJobs = { viewModel.onAction(ChapterStageAction.LoadHome) },
-                onDismissError = { viewModel.onAction(ChapterStageAction.DismissError) },
-            )
-        }
-        composable<CreateChapterRoute> {
-            CreateChapterScreen(
-                sourceMode = state.sourceMode,
-                draft = state.sourceDraft,
-                sampleText = state.sampleText,
-                isPickingFile = state.isPickingFile,
-                errorMessage = state.createErrorMessage,
-                onSourceModeChange = { viewModel.onAction(ChapterStageAction.ChangeSourceMode(it)) },
-                onDraftChange = { viewModel.onAction(ChapterStageAction.UpdateSourceDraft(it)) },
-                onPickFile = { viewModel.onAction(ChapterStageAction.PickChapterFile) },
-                onFileSelected = { file -> viewModel.onAction(ChapterStageAction.SelectChapterFile(file)) },
-                onFilePickCancelled = { viewModel.onAction(ChapterStageAction.CancelChapterFilePicker) },
-                onFilePickFailed = { message -> viewModel.onAction(ChapterStageAction.FilePickerFailed(message)) },
-                onRemoveFile = { viewModel.onAction(ChapterStageAction.RemoveChapterFile) },
-                onBack = { viewModel.onAction(ChapterStageAction.NavigateBack) },
-                onContinue = { viewModel.onAction(ChapterStageAction.ContinueToSettings) },
-                onDismissError = { viewModel.onAction(ChapterStageAction.DismissError) },
-            )
-        }
-        composable<GenerationSettingsRoute> {
-            GenerationSettingsScreen(
-                settings = state.settings,
-                isStartingWorkflow = state.isStartingWorkflow,
-                errorMessage = state.settingsErrorMessage,
-                onSettingsChange = { viewModel.onAction(ChapterStageAction.UpdateSettings(it)) },
-                onBack = { viewModel.onAction(ChapterStageAction.NavigateBack) },
-                onStartWorkflow = {
-                    viewModel.onAction(ChapterStageAction.StartWorkflow)
-                },
-                onDismissError = { viewModel.onAction(ChapterStageAction.DismissError) },
-            )
-        }
-        composable<GenerationProgressRoute> {
-            GenerationProgressScreen(
-                agents = state.agents,
-                snapshot = state.snapshot,
-                settings = state.settings,
-                chapterTitle = state.sourceDraft.chapterTitle.ifBlank { state.sampleChapterTitle },
-                errorMessage = state.progressErrorMessage,
-                onBack = { viewModel.onAction(ChapterStageAction.NavigateBack) },
-                onViewTrace = { viewModel.onAction(ChapterStageAction.ViewTrace) },
-                onOpenViewer = {
-                    viewModel.onAction(ChapterStageAction.OpenViewer)
-                },
-                onRetry = { viewModel.onAction(ChapterStageAction.RetryProgress) },
-                onDismissError = { viewModel.onAction(ChapterStageAction.DismissError) },
-            )
-        }
-        composable<AgentTraceRoute> {
-            AgentTraceScreen(
-                agents = state.agents,
-                snapshot = state.snapshot,
-                errorMessage = state.traceErrorMessage,
-                onBack = { viewModel.onAction(ChapterStageAction.NavigateBack) },
-                onRetry = { viewModel.onAction(ChapterStageAction.RetryTrace) },
-                onDismissError = { viewModel.onAction(ChapterStageAction.DismissError) },
-            )
-        }
-        composable<ExperienceViewerRoute> {
-            val publicUrl = state.snapshot.publicUrl ?: "chapterstage.app/loading"
-            ExperienceViewerScreen(
-                state = state.viewerState,
-                publicUrl = publicUrl,
-                title = state.snapshot.title
-                    ?: state.sourceDraft.chapterTitle.ifBlank { state.sampleChapterTitle },
-                subtitle = state.snapshot.subtitle
-                    ?: state.sourceDraft.bookTitle.ifBlank { "Generated experience" },
-                errorMessage = state.viewerErrorMessage,
-                onBack = { viewModel.onAction(ChapterStageAction.NavigateBack) },
-                onRetry = { viewModel.onAction(ChapterStageAction.RetryViewer) },
-                onOpenExternal = {
-                    runCatching {
-                        uriHandler.openUri(publicUrl.withHttpsScheme())
-                    }.onFailure {
-                        viewModel.onAction(ChapterStageAction.ExternalViewerOpenFailed)
-                    }
-                },
-            )
+    SharedTransitionLayout {
+        val sharedTransitionScope = this
+
+        NavHost(
+            navController = navController,
+            startDestination = SplashRoute,
+            enterTransition = { stageEnterTransition(forward = true) },
+            exitTransition = { stageExitTransition(forward = true) },
+            popEnterTransition = { stageEnterTransition(forward = false) },
+            popExitTransition = { stageExitTransition(forward = false) },
+        ) {
+            composable<SplashRoute> {
+                StageSharedMotionProvider(
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = this,
+                ) {
+                    SplashScreen(
+                        onCreateChapter = {
+                            viewModel.onAction(ChapterStageAction.NavigateCreateChapter)
+                        },
+                        onViewDemo = {
+                            viewModel.onAction(ChapterStageAction.StartDemoFlow)
+                        },
+                    )
+                }
+            }
+            composable<HomeRoute> {
+                StageSharedMotionProvider(
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = this,
+                ) {
+                    HomeScreen(
+                        recentJobs = state.recentJobs,
+                        isLoading = state.isHomeLoading,
+                        errorMessage = state.homeErrorMessage,
+                        onCreateChapter = { viewModel.onAction(ChapterStageAction.NavigateCreateChapter) },
+                        onOpenRecentJob = { job ->
+                            viewModel.onAction(ChapterStageAction.OpenRecentJob(job))
+                        },
+                        onRetryRecentJobs = { viewModel.onAction(ChapterStageAction.LoadHome) },
+                        onDismissError = { viewModel.onAction(ChapterStageAction.DismissError) },
+                    )
+                }
+            }
+            composable<CreateChapterRoute> {
+                StageSharedMotionProvider(
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = this,
+                ) {
+                    CreateChapterScreen(
+                        sourceMode = state.sourceMode,
+                        draft = state.sourceDraft,
+                        sampleText = state.sampleText,
+                        isPickingFile = state.isPickingFile,
+                        errorMessage = state.createErrorMessage,
+                        onSourceModeChange = { viewModel.onAction(ChapterStageAction.ChangeSourceMode(it)) },
+                        onDraftChange = { viewModel.onAction(ChapterStageAction.UpdateSourceDraft(it)) },
+                        onPickFile = { viewModel.onAction(ChapterStageAction.PickChapterFile) },
+                        onFileSelected = { file -> viewModel.onAction(ChapterStageAction.SelectChapterFile(file)) },
+                        onFilePickCancelled = { viewModel.onAction(ChapterStageAction.CancelChapterFilePicker) },
+                        onFilePickFailed = { message ->
+                            viewModel.onAction(ChapterStageAction.FilePickerFailed(message))
+                        },
+                        onRemoveFile = { viewModel.onAction(ChapterStageAction.RemoveChapterFile) },
+                        onBack = { viewModel.onAction(ChapterStageAction.NavigateBack) },
+                        onContinue = { viewModel.onAction(ChapterStageAction.ContinueToSettings) },
+                        onDismissError = { viewModel.onAction(ChapterStageAction.DismissError) },
+                    )
+                }
+            }
+            composable<GenerationSettingsRoute> {
+                StageSharedMotionProvider(
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = this,
+                ) {
+                    GenerationSettingsScreen(
+                        settings = state.settings,
+                        isStartingWorkflow = state.isStartingWorkflow,
+                        errorMessage = state.settingsErrorMessage,
+                        onSettingsChange = { viewModel.onAction(ChapterStageAction.UpdateSettings(it)) },
+                        onBack = { viewModel.onAction(ChapterStageAction.NavigateBack) },
+                        onStartWorkflow = {
+                            viewModel.onAction(ChapterStageAction.StartWorkflow)
+                        },
+                        onDismissError = { viewModel.onAction(ChapterStageAction.DismissError) },
+                    )
+                }
+            }
+            composable<GenerationProgressRoute> {
+                StageSharedMotionProvider(
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = this,
+                ) {
+                    GenerationProgressScreen(
+                        agents = state.agents,
+                        snapshot = state.snapshot,
+                        settings = state.settings,
+                        chapterTitle = state.sourceDraft.chapterTitle.ifBlank { state.sampleChapterTitle },
+                        errorMessage = state.progressErrorMessage,
+                        onBack = { viewModel.onAction(ChapterStageAction.NavigateBack) },
+                        onViewTrace = { viewModel.onAction(ChapterStageAction.ViewTrace) },
+                        onOpenViewer = {
+                            viewModel.onAction(ChapterStageAction.OpenViewer)
+                        },
+                        onRetry = { viewModel.onAction(ChapterStageAction.RetryProgress) },
+                        onDismissError = { viewModel.onAction(ChapterStageAction.DismissError) },
+                    )
+                }
+            }
+            composable<AgentTraceRoute> {
+                StageSharedMotionProvider(
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = this,
+                ) {
+                    AgentTraceScreen(
+                        agents = state.agents,
+                        snapshot = state.snapshot,
+                        errorMessage = state.traceErrorMessage,
+                        onBack = { viewModel.onAction(ChapterStageAction.NavigateBack) },
+                        onRetry = { viewModel.onAction(ChapterStageAction.RetryTrace) },
+                        onDismissError = { viewModel.onAction(ChapterStageAction.DismissError) },
+                    )
+                }
+            }
+            composable<ExperienceViewerRoute> {
+                StageSharedMotionProvider(
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = this,
+                ) {
+                    val publicUrl = state.snapshot.publicUrl ?: "chapterstage.app/loading"
+                    ExperienceViewerScreen(
+                        state = state.viewerState,
+                        publicUrl = publicUrl,
+                        title = state.snapshot.title
+                            ?: state.sourceDraft.chapterTitle.ifBlank { state.sampleChapterTitle },
+                        subtitle = state.snapshot.subtitle
+                            ?: state.sourceDraft.bookTitle.ifBlank { "Generated experience" },
+                        errorMessage = state.viewerErrorMessage,
+                        onBack = { viewModel.onAction(ChapterStageAction.NavigateBack) },
+                        onRetry = { viewModel.onAction(ChapterStageAction.RetryViewer) },
+                        onOpenExternal = {
+                            runCatching {
+                                uriHandler.openUri(publicUrl.withHttpsScheme())
+                            }.onFailure {
+                                viewModel.onAction(ChapterStageAction.ExternalViewerOpenFailed)
+                            }
+                        },
+                    )
+                }
+            }
         }
     }
 }

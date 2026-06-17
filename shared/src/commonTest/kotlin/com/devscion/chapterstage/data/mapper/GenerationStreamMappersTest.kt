@@ -13,7 +13,7 @@ class GenerationStreamMappersTest {
     }
 
     @Test
-    fun `given sparse stream event, when mapped, then job keeps derived trace state`() {
+    fun `given sparse stream event when mapped then job keeps derived trace state`() {
         val event = ServerSentEvent(
             event = "agent_update",
             data = """
@@ -45,14 +45,14 @@ class GenerationStreamMappersTest {
     }
 
     @Test
-    fun `given invalid stream data, when mapped, then null is returned`() {
+    fun `given invalid stream data when mapped then null is returned`() {
         val event = ServerSentEvent(event = "progress", data = "not-json")
 
         assertNull(event.toGenerationStreamEvent(json))
     }
 
     @Test
-    fun `given backend progress event, when mapped, then fractional progress becomes percent`() {
+    fun `given backend progress event when mapped then fractional progress becomes percent`() {
         val event = ServerSentEvent(
             event = "job_progress",
             data = """
@@ -78,7 +78,7 @@ class GenerationStreamMappersTest {
     }
 
     @Test
-    fun `given backend agent event payload object, when mapped, then payload is preserved as text`() {
+    fun `given backend agent event payload object when mapped then payload is preserved as text`() {
         val event = ServerSentEvent(
             event = "agent_message",
             data = """

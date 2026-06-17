@@ -41,6 +41,7 @@ internal fun SettingsPreviewCard(
     StageCard(
         modifier = modifier.fillMaxWidth(),
         accent = MaterialTheme.stageColors.primary,
+        sharedKey = "chapterstage-primary-panel",
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -150,14 +151,14 @@ private fun SceneCountPreview(
                     color = if (index == 0) {
                         MaterialTheme.stageColors.primary.copy(alpha = 0.36f)
                     } else {
-                        Color.White.copy(alpha = 0.06f)
+                        Color.White.copy(alpha = 0.08f)
                     },
                     border = BorderStroke(
                         width = 1.dp,
                         color = if (index == 0) {
                             MaterialTheme.stageColors.primary.copy(alpha = 0.5f)
                         } else {
-                            MaterialTheme.stageColors.line
+                            MaterialTheme.stageColors.lineHigh
                         },
                     ),
                     content = {},

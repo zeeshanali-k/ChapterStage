@@ -48,6 +48,7 @@ internal fun NewExperienceCard(
         modifier = modifier.fillMaxWidth(),
         accent = MaterialTheme.stageColors.primary,
         onClick = onCreateChapter,
+        sharedKey = "chapterstage-primary-panel",
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -73,6 +74,7 @@ internal fun NewExperienceCard(
                     text = "Start",
                     onClick = onCreateChapter,
                     trailingText = "->",
+                    sharedKey = "chapterstage-primary-action",
                 )
             }
             ChapterStageLogo(compact = true)
@@ -212,8 +214,8 @@ private fun RecentJobCard(
             Surface(
                 modifier = Modifier.size(42.dp),
                 shape = MaterialTheme.shapes.medium,
-                color = Color.White.copy(alpha = 0.04f),
-                border = BorderStroke(1.dp, MaterialTheme.stageColors.line),
+                color = MaterialTheme.stageColors.surfaceElement,
+                border = BorderStroke(1.dp, MaterialTheme.stageColors.lineHigh),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
@@ -288,8 +290,8 @@ internal fun HomeProfileBadge(
     Surface(
         modifier = modifier.size(34.dp),
         shape = CircleShape,
-        color = Color.White.copy(alpha = 0.04f),
-        border = BorderStroke(1.dp, MaterialTheme.stageColors.line),
+        color = MaterialTheme.stageColors.surfaceElement,
+        border = BorderStroke(1.dp, MaterialTheme.stageColors.lineHigh),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(

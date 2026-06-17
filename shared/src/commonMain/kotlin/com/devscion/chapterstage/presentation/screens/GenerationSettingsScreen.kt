@@ -87,6 +87,7 @@ fun GenerationSettingsScreen(
             enabled = !isStartingWorkflow,
             large = true,
             leadingText = "AG",
+            sharedKey = "chapterstage-primary-action",
         )
     }
 }
