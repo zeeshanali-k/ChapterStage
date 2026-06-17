@@ -19,8 +19,12 @@ import com.devscion.chapterstage.presentation.model.ViewerLoadState
 fun ExperienceViewerScreen(
     state: ViewerLoadState,
     publicUrl: String,
+    title: String,
+    subtitle: String,
+    errorMessage: String?,
     onBack: () -> Unit,
     onRetry: () -> Unit,
+    onOpenExternal: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -34,15 +38,23 @@ fun ExperienceViewerScreen(
             .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
         ViewerTopBar(
-            title = "Photosynthesis",
-            subtitle = "Living Systems - Ch.4",
+            title = title,
+            subtitle = subtitle,
             onBack = onBack,
+            onOpenExternal = onOpenExternal,
         )
         BrowserChrome(publicUrl = publicUrl)
         when (state) {
             ViewerLoadState.Loading -> ViewerLoadingState()
-            ViewerLoadState.Error -> ViewerErrorState(onRetry = onRetry)
-            ViewerLoadState.Loaded -> GeneratedExperiencePreview(publicUrl = publicUrl)
+            ViewerLoadState.Error -> ViewerErrorState(
+                message = errorMessage,
+                onRetry = onRetry,
+                onOpenExternal = onOpenExternal,
+            )
+            ViewerLoadState.Loaded -> HostedExperienceReady(
+                publicUrl = publicUrl,
+                onOpenExternal = onOpenExternal,
+            )
         }
     }
 }
@@ -54,9 +66,12 @@ private fun ExperienceViewerScreenPreview() {
         ExperienceViewerScreen(
             state = ViewerLoadState.Loaded,
             publicUrl = "chapterstage.app/c/photosynthesis",
+            title = "Photosynthesis",
+            subtitle = "Living Systems - Ch.4",
+            errorMessage = null,
             onBack = {},
             onRetry = {},
+            onOpenExternal = {},
         )
     }
 }
-

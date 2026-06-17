@@ -1,14 +1,13 @@
 package com.devscion.chapterstage.presentation.screens
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,11 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -47,6 +42,7 @@ internal fun ViewerTopBar(
     title: String,
     subtitle: String,
     onBack: () -> Unit,
+    onOpenExternal: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -79,7 +75,8 @@ internal fun ViewerTopBar(
         Surface(
             modifier = Modifier
                 .size(38.dp)
-                .clip(controlShape),
+                .clip(controlShape)
+                .clickable(onClick = onOpenExternal),
             shape = controlShape,
             color = Color.White.copy(alpha = 0.04f),
             border = BorderStroke(1.dp, MaterialTheme.stageColors.line),
@@ -184,7 +181,9 @@ internal fun ViewerLoadingState(
 
 @Composable
 internal fun ViewerErrorState(
+    message: String?,
     onRetry: () -> Unit,
+    onOpenExternal: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -219,93 +218,78 @@ internal fun ViewerErrorState(
         )
         Text(
             modifier = Modifier.padding(top = MaterialTheme.spacing.small),
-            text = "The hosted chapter did not respond. Check your connection and try again.",
+            text = message ?: "The hosted chapter did not respond. Check your connection and try again.",
             color = MaterialTheme.stageColors.textSecondary,
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
         )
-        StageButton(
-            modifier = Modifier.padding(top = MaterialTheme.spacing.large),
-            text = "Retry",
-            onClick = onRetry,
-            leadingText = "RT",
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = MaterialTheme.spacing.large),
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
+        ) {
+            StageButton(
+                modifier = Modifier.weight(1f),
+                text = "Retry",
+                onClick = onRetry,
+                leadingText = "RT",
+            )
+            StageButton(
+                modifier = Modifier.weight(1f),
+                text = "Open Link",
+                onClick = onOpenExternal,
+                variant = StageButtonVariant.Ghost,
+                leadingText = "EX",
+            )
+        }
     }
 }
 
 @Composable
-internal fun GeneratedExperiencePreview(
+internal fun HostedExperienceReady(
     publicUrl: String,
+    onOpenExternal: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .background(Brush.verticalGradient(listOf(Color(0xFF0C1F18), Color(0xFF0A1712))))
-            .padding(bottom = MaterialTheme.spacing.large),
+            .padding(MaterialTheme.spacing.large),
+        verticalArrangement = Arrangement.Center,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    start = MaterialTheme.spacing.large,
-                    end = MaterialTheme.spacing.large,
-                    top = MaterialTheme.spacing.medium,
-                    bottom = MaterialTheme.spacing.xSmall,
-                ),
-            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.xSmall),
+        StageCard(
+            accent = MaterialTheme.stageColors.success,
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(MaterialTheme.spacing.large),
         ) {
-            repeat(8) { index ->
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(4.dp)
-                        .clip(CircleShape)
-                        .background(if (index == 0) Color(0xFF3DDC97) else Color.White.copy(alpha = 0.12f)),
-                )
-            }
-        }
-        Column(modifier = Modifier.padding(horizontal = MaterialTheme.spacing.large)) {
             StageLabel(
-                text = "SCENE 01 - HOOK",
-                color = Color(0xFF3DDC97),
+                text = "READY",
+                color = MaterialTheme.stageColors.success,
+            )
+            Text(
+                modifier = Modifier.padding(top = MaterialTheme.spacing.medium),
+                text = "Generated chapter",
+                color = MaterialTheme.stageColors.textPrimary,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
             )
             Text(
                 modifier = Modifier.padding(top = MaterialTheme.spacing.small),
-                text = "How a leaf eats light",
-                color = Color(0xFFEAF7F0),
-                style = MaterialTheme.typography.headlineMedium,
-            )
-        }
-        LeafDiagramCard()
-        StageCard(
-            modifier = Modifier.padding(horizontal = MaterialTheme.spacing.large),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(MaterialTheme.spacing.medium),
-        ) {
-            Text(
-                text = "A leaf takes in sunlight, water and carbon dioxide - and packs that energy into glucose.",
-                color = Color(0xFFD6E8E0),
-                style = MaterialTheme.typography.bodyLarge,
+                text = publicUrl,
+                color = MaterialTheme.stageColors.textTertiary,
+                style = MaterialTheme.typography.bodySmall,
+                fontFamily = FontFamily.Monospace,
             )
             StageButton(
-                modifier = Modifier.padding(top = MaterialTheme.spacing.medium),
-                text = "Tap the leaf to see inside",
-                onClick = {},
-                variant = StageButtonVariant.Soft,
-                leadingText = "QZ",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = MaterialTheme.spacing.large),
+                text = "Open Experience",
+                onClick = onOpenExternal,
+                leadingText = "EX",
             )
         }
-        Text(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = MaterialTheme.spacing.medium),
-            text = publicUrl,
-            color = Color(0xFF6E9A86),
-            style = MaterialTheme.typography.labelSmall,
-            fontFamily = FontFamily.Monospace,
-            textAlign = TextAlign.Center,
-        )
     }
 }
 
@@ -337,53 +321,4 @@ private fun LoadingLine(
             .clip(MaterialTheme.shapes.extraSmall)
             .background(Color.White.copy(alpha = 0.05f)),
     )
-}
-
-@Composable
-private fun LeafDiagramCard(
-    modifier: Modifier = Modifier,
-) {
-    StageCard(
-        modifier = modifier.padding(MaterialTheme.spacing.large),
-        accent = Color(0xFF3DDC97),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(MaterialTheme.spacing.medium),
-    ) {
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(150.dp),
-        ) {
-            val green = Color(0xFF3DDC97)
-            val sun = Offset(size.width * 0.18f, size.height * 0.32f)
-            drawCircle(color = Color(0xFFF6C85F), radius = 18.dp.toPx(), center = sun)
-            drawLine(
-                color = Color(0xFFF6C85F).copy(alpha = 0.8f),
-                start = Offset(size.width * 0.28f, size.height * 0.36f),
-                end = Offset(size.width * 0.48f, size.height * 0.48f),
-                strokeWidth = 2.dp.toPx(),
-            )
-            drawOval(
-                color = green,
-                topLeft = Offset(size.width * 0.46f, size.height * 0.24f),
-                size = Size(size.width * 0.26f, size.height * 0.36f),
-            )
-            drawLine(
-                color = Color(0xFF0C1F18).copy(alpha = 0.48f),
-                start = Offset(size.width * 0.51f, size.height * 0.55f),
-                end = Offset(size.width * 0.68f, size.height * 0.32f),
-                strokeWidth = 2.dp.toPx(),
-            )
-            drawCircle(
-                color = green.copy(alpha = 0.18f),
-                radius = 18.dp.toPx(),
-                center = Offset(size.width * 0.84f, size.height * 0.44f),
-            )
-            drawCircle(
-                color = green,
-                radius = 18.dp.toPx(),
-                center = Offset(size.width * 0.84f, size.height * 0.44f),
-                style = Stroke(width = 1.5.dp.toPx()),
-            )
-        }
-    }
 }

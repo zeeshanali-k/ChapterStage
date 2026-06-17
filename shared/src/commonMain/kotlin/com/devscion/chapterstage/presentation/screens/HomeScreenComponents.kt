@@ -30,8 +30,11 @@ import com.devscion.chapterstage.design.spacing
 import com.devscion.chapterstage.presentation.components.ChapterStageLogo
 import com.devscion.chapterstage.presentation.components.StageButton
 import com.devscion.chapterstage.presentation.components.StageCard
+import com.devscion.chapterstage.presentation.components.StageEmptyState
 import com.devscion.chapterstage.presentation.components.StageIconBadge
+import com.devscion.chapterstage.presentation.components.StageInlineError
 import com.devscion.chapterstage.presentation.components.StageLabel
+import com.devscion.chapterstage.presentation.components.StageLoadingNotice
 import com.devscion.chapterstage.presentation.components.StatusDot
 import com.devscion.chapterstage.presentation.model.AgentStatus
 import com.devscion.chapterstage.presentation.model.RecentJobUiModel
@@ -130,7 +133,11 @@ internal fun HowItWorksSection(
 @Composable
 internal fun RecentJobsSection(
     recentJobs: List<RecentJobUiModel>,
+    isLoading: Boolean,
+    errorMessage: String?,
     onOpenRecentJob: (RecentJobUiModel) -> Unit,
+    onRetry: () -> Unit,
+    onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -149,11 +156,26 @@ internal fun RecentJobsSection(
             )
         }
         Column(verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)) {
-            recentJobs.forEach { job ->
-                RecentJobCard(
-                    job = job,
-                    onClick = { onOpenRecentJob(job) },
+            if (errorMessage != null) {
+                StageInlineError(
+                    title = "Recent jobs did not update",
+                    message = errorMessage,
+                    onRetry = onRetry,
+                    onDismiss = onDismissError,
                 )
+            }
+            when {
+                isLoading -> StageLoadingNotice(message = "Refreshing recent chapter jobs...")
+                recentJobs.isEmpty() -> StageEmptyState(
+                    title = "No chapter jobs yet",
+                    message = "Your generated chapter experiences will appear here.",
+                )
+                else -> recentJobs.forEach { job ->
+                    RecentJobCard(
+                        job = job,
+                        onClick = { onOpenRecentJob(job) },
+                    )
+                }
             }
         }
     }
@@ -166,6 +188,17 @@ private fun RecentJobCard(
     modifier: Modifier = Modifier,
 ) {
     val ready = job.status == "ready"
+    val failed = job.status == "failed"
+    val statusColor = when {
+        ready -> MaterialTheme.stageColors.success
+        failed -> MaterialTheme.stageColors.error
+        else -> MaterialTheme.stageColors.warning
+    }
+    val statusText = when {
+        ready -> "READY"
+        failed -> "FAILED"
+        else -> "${job.progress}%"
+    }
 
     StageCard(
         modifier = modifier.fillMaxWidth(),
@@ -214,11 +247,7 @@ private fun RecentJobCard(
                     modifier = Modifier
                         .clip(MaterialTheme.shapes.small)
                         .background(
-                            if (ready) {
-                                MaterialTheme.stageColors.success.copy(alpha = 0.12f)
-                            } else {
-                                MaterialTheme.stageColors.warning.copy(alpha = 0.12f)
-                            },
+                            statusColor.copy(alpha = 0.12f),
                         )
                         .padding(
                             horizontal = MaterialTheme.spacing.small,
@@ -229,21 +258,23 @@ private fun RecentJobCard(
                 ) {
                     StatusDot(
                         status = if (ready) AgentStatus.Completed else AgentStatus.Active,
-                        color = MaterialTheme.stageColors.warning,
+                        color = statusColor,
                         size = 6.dp,
                     )
                     Text(
-                        text = if (ready) "READY" else "BUILDING",
-                        color = if (ready) MaterialTheme.stageColors.success else MaterialTheme.stageColors.warning,
+                        text = statusText,
+                        color = statusColor,
                         style = MaterialTheme.typography.labelSmall,
                         fontFamily = FontFamily.Monospace,
                     )
                 }
                 Text(
                     modifier = Modifier.padding(top = MaterialTheme.spacing.xSmall),
-                    text = job.updatedAt,
+                    text = job.currentStep ?: job.updatedAt,
                     color = MaterialTheme.stageColors.textTertiary,
                     style = MaterialTheme.typography.labelSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }

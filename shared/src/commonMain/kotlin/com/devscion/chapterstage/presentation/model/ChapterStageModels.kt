@@ -10,7 +10,36 @@ data class ChapterSourceDraft(
     val chapterTitle: String = "",
     val text: String = "",
     val selectedFileName: String? = null,
+    val selectedFileSizeLabel: String? = null,
+    val selectedFileExtension: String? = null,
 )
+
+data class PickedChapterFile(
+    val fileName: String,
+    val bytes: ByteArray,
+    val contentType: String,
+) {
+    val extension: String = fileName.substringAfterLast('.', missingDelimiterValue = "").lowercase()
+    val sizeBytes: Long = bytes.size.toLong()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PickedChapterFile) return false
+
+        if (fileName != other.fileName) return false
+        if (!bytes.contentEquals(other.bytes)) return false
+        if (contentType != other.contentType) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = fileName.hashCode()
+        result = 31 * result + bytes.contentHashCode()
+        result = 31 * result + contentType.hashCode()
+        return result
+    }
+}
 
 enum class SourceMode(val label: String) {
     PasteText("Paste text"),
@@ -92,15 +121,25 @@ data class TraceEventUiModel(
 
 @Immutable
 data class RecentJobUiModel(
+    val id: String,
     val title: String,
     val book: String,
     val status: String,
     val style: String,
     val updatedAt: String,
+    val progress: Int = 0,
+    val currentStep: String? = null,
+    val experienceId: String? = null,
+    val publicUrl: String? = null,
+    val errorMessage: String? = null,
 )
 
 @Immutable
 data class GenerationSnapshot(
+    val jobId: String? = null,
+    val experienceId: String? = null,
+    val title: String? = null,
+    val subtitle: String? = null,
     val statuses: Map<String, AgentStatus> = emptyMap(),
     val activeAgentId: String? = null,
     val events: List<TraceEventUiModel> = emptyList(),
@@ -185,6 +224,7 @@ class ChapterStageDemoContent {
 
     val recentJobs: List<RecentJobUiModel> = listOf(
         RecentJobUiModel(
+            id = "recent-photosynthesis",
             title = "Photosynthesis",
             book = "Living Systems - Ch.4",
             status = "ready",
@@ -192,6 +232,7 @@ class ChapterStageDemoContent {
             updatedAt = "2m ago",
         ),
         RecentJobUiModel(
+            id = "recent-supply-demand",
             title = "Supply and Demand",
             book = "Foundations of Economics - Ch.2",
             status = "generating",
@@ -199,6 +240,7 @@ class ChapterStageDemoContent {
             updatedAt = "now",
         ),
         RecentJobUiModel(
+            id = "recent-french-revolution",
             title = "The French Revolution",
             book = "A Short History - Ch.9",
             status = "ready",
@@ -349,6 +391,8 @@ class ChapterStageDemoContent {
         }
 
         return GenerationSnapshot(
+            jobId = "job-px-4471",
+            experienceId = if (isComplete) "experience-photosynthesis" else null,
             statuses = statuses,
             activeAgentId = activeAgentId,
             events = visibleEvents,

@@ -15,6 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.devscion.chapterstage.design.ChapterStageTheme
 import com.devscion.chapterstage.design.spacing
 import com.devscion.chapterstage.presentation.components.StageButton
+import com.devscion.chapterstage.presentation.components.StageInlineError
 import com.devscion.chapterstage.presentation.components.StageScreen
 import com.devscion.chapterstage.presentation.components.StageTopBar
 import com.devscion.chapterstage.presentation.model.GenerationSettingsDraft
@@ -22,9 +23,12 @@ import com.devscion.chapterstage.presentation.model.GenerationSettingsDraft
 @Composable
 fun GenerationSettingsScreen(
     settings: GenerationSettingsDraft,
+    isStartingWorkflow: Boolean,
+    errorMessage: String?,
     onSettingsChange: (GenerationSettingsDraft) -> Unit,
     onBack: () -> Unit,
     onStartWorkflow: () -> Unit,
+    onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val spacing = MaterialTheme.spacing
@@ -36,6 +40,16 @@ fun GenerationSettingsScreen(
             onBack = onBack,
         )
         Spacer(modifier = Modifier.height(spacing.medium))
+        if (errorMessage != null) {
+            StageInlineError(
+                modifier = Modifier.fillMaxWidth(),
+                title = "Workflow could not start",
+                message = errorMessage,
+                onRetry = onStartWorkflow,
+                onDismiss = onDismissError,
+            )
+            Spacer(modifier = Modifier.height(spacing.medium))
+        }
 
         if (layout.isWide) {
             Row(
@@ -68,8 +82,9 @@ fun GenerationSettingsScreen(
         Spacer(modifier = Modifier.height(spacing.extraLarge))
         StageButton(
             modifier = Modifier.fillMaxWidth(),
-            text = "Start Agent Workflow",
+            text = if (isStartingWorkflow) "Starting Workflow" else "Start Agent Workflow",
             onClick = onStartWorkflow,
+            enabled = !isStartingWorkflow,
             large = true,
             leadingText = "AG",
         )
@@ -82,10 +97,12 @@ private fun GenerationSettingsScreenPreview() {
     ChapterStageTheme {
         GenerationSettingsScreen(
             settings = GenerationSettingsDraft(),
+            isStartingWorkflow = false,
+            errorMessage = null,
             onSettingsChange = {},
             onBack = {},
             onStartWorkflow = {},
+            onDismissError = {},
         )
     }
 }
-

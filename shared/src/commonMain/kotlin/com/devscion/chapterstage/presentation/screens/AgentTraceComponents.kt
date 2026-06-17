@@ -104,15 +104,30 @@ internal fun TraceTimeline(
             )
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)) {
-            events.forEachIndexed { index, event ->
-                val agent = agentById[event.agentId]
-                if (agent != null) {
-                    TraceEventRow(
-                        event = event,
-                        agent = agent,
-                        dense = index == events.lastIndex,
-                    )
+        if (events.isEmpty()) {
+            Text(
+                text = "No trace events yet",
+                color = MaterialTheme.stageColors.textPrimary,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                modifier = Modifier.padding(top = MaterialTheme.spacing.extraSmall),
+                text = "Agent events will appear here as the workflow progresses.",
+                color = MaterialTheme.stageColors.textSecondary,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)) {
+                events.forEachIndexed { index, event ->
+                    val agent = agentById[event.agentId]
+                    if (agent != null) {
+                        TraceEventRow(
+                            event = event,
+                            agent = agent,
+                            dense = index == events.lastIndex,
+                        )
+                    }
                 }
             }
         }
@@ -147,4 +162,3 @@ private fun TraceStatCell(
         )
     }
 }
-

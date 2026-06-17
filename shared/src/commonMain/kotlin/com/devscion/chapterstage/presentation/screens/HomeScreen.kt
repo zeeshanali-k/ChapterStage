@@ -24,8 +24,12 @@ import com.devscion.chapterstage.presentation.model.RecentJobUiModel
 @Composable
 fun HomeScreen(
     recentJobs: List<RecentJobUiModel>,
+    isLoading: Boolean,
+    errorMessage: String?,
     onCreateChapter: () -> Unit,
     onOpenRecentJob: (RecentJobUiModel) -> Unit,
+    onRetryRecentJobs: () -> Unit,
+    onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val spacing = MaterialTheme.spacing
@@ -67,7 +71,11 @@ fun HomeScreen(
                         .weight(1f)
                         .widthIn(max = spacing.maxPaneWidth),
                     recentJobs = recentJobs,
+                    isLoading = isLoading,
+                    errorMessage = errorMessage,
                     onOpenRecentJob = onOpenRecentJob,
+                    onRetry = onRetryRecentJobs,
+                    onDismissError = onDismissError,
                 )
             }
         } else {
@@ -76,7 +84,11 @@ fun HomeScreen(
                 HowItWorksSection()
                 RecentJobsSection(
                     recentJobs = recentJobs,
+                    isLoading = isLoading,
+                    errorMessage = errorMessage,
                     onOpenRecentJob = onOpenRecentJob,
+                    onRetry = onRetryRecentJobs,
+                    onDismissError = onDismissError,
                 )
             }
         }
@@ -91,8 +103,12 @@ private fun HomeScreenPreview() {
     ChapterStageTheme {
         HomeScreen(
             recentJobs = content.recentJobs,
+            isLoading = false,
+            errorMessage = null,
             onCreateChapter = {},
             onOpenRecentJob = {},
+            onRetryRecentJobs = {},
+            onDismissError = {},
         )
     }
 }

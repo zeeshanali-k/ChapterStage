@@ -10,14 +10,15 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.devscion.chapterstage.design.ChapterStageTheme
+import com.devscion.chapterstage.di.AppModule
+import com.devscion.chapterstage.di.module as appModule
 import com.devscion.chapterstage.navigation.AgentTraceRoute
 import com.devscion.chapterstage.navigation.CreateChapterRoute
 import com.devscion.chapterstage.navigation.ExperienceViewerRoute
@@ -25,12 +26,6 @@ import com.devscion.chapterstage.navigation.GenerationProgressRoute
 import com.devscion.chapterstage.navigation.GenerationSettingsRoute
 import com.devscion.chapterstage.navigation.HomeRoute
 import com.devscion.chapterstage.navigation.SplashRoute
-import com.devscion.chapterstage.presentation.model.ChapterSourceDraft
-import com.devscion.chapterstage.presentation.model.ChapterStageDemoContent
-import com.devscion.chapterstage.presentation.model.GenerationSettingsDraft
-import com.devscion.chapterstage.presentation.model.GenerationSnapshot
-import com.devscion.chapterstage.presentation.model.SourceMode
-import com.devscion.chapterstage.presentation.model.ViewerLoadState
 import com.devscion.chapterstage.presentation.screens.AgentTraceScreen
 import com.devscion.chapterstage.presentation.screens.CreateChapterScreen
 import com.devscion.chapterstage.presentation.screens.ExperienceViewerScreen
@@ -38,23 +33,20 @@ import com.devscion.chapterstage.presentation.screens.GenerationProgressScreen
 import com.devscion.chapterstage.presentation.screens.GenerationSettingsScreen
 import com.devscion.chapterstage.presentation.screens.HomeScreen
 import com.devscion.chapterstage.presentation.screens.SplashScreen
-import kotlinx.coroutines.delay
+import com.devscion.chapterstage.presentation.state.ChapterStageAction
+import com.devscion.chapterstage.presentation.state.ChapterStageEvent
+import com.devscion.chapterstage.presentation.state.ChapterStageViewModel
 import org.koin.compose.KoinApplication
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.logger.Level
 import org.koin.dsl.koinConfiguration
-import org.koin.dsl.module
 
 @Composable
 @Preview
 fun App() {
     KoinApplication(
         configuration = koinConfiguration {
-            modules(
-                module {
-                    single { ChapterStageDemoContent() }
-                },
-            )
+            modules(AppModule().appModule())
         },
         logLevel = Level.ERROR,
     ) {
@@ -67,46 +59,22 @@ fun App() {
 @Composable
 private fun ChapterStageApp() {
     val navController = rememberNavController()
-    val content = koinInject<ChapterStageDemoContent>()
+    val viewModel = koinViewModel<ChapterStageViewModel>()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val uriHandler = LocalUriHandler.current
 
-    var sourceMode by remember { mutableStateOf(SourceMode.PasteText) }
-    var sourceDraft by remember { mutableStateOf(ChapterSourceDraft()) }
-    var settings by remember { mutableStateOf(GenerationSettingsDraft()) }
-    var generationRunKey by remember { mutableStateOf(0) }
-    var snapshot by remember {
-        mutableStateOf(
-            GenerationSnapshot(
-                statuses = content.agents.associate { it.id to com.devscion.chapterstage.presentation.model.AgentStatus.Waiting },
-            ),
-        )
-    }
-    var viewerState by remember { mutableStateOf(ViewerLoadState.Loaded) }
-    var viewerRunKey by remember { mutableStateOf(0) }
-
-    LaunchedEffect(generationRunKey) {
-        if (generationRunKey == 0) return@LaunchedEffect
-
-        snapshot = content.snapshotFor(
-            revealedEventCount = 0,
-            elapsedSeconds = 0,
-            settings = settings,
-        )
-        for (eventCount in 1..content.traceEvents.size) {
-            delay(720)
-            snapshot = content.snapshotFor(
-                revealedEventCount = eventCount,
-                elapsedSeconds = (eventCount * 2).coerceAtMost(22),
-                settings = settings,
-            )
+    LaunchedEffect(viewModel, navController) {
+        viewModel.events.collect { event ->
+            when (event) {
+                ChapterStageEvent.NavigateHome -> navController.navigate(HomeRoute)
+                ChapterStageEvent.NavigateCreateChapter -> navController.navigate(CreateChapterRoute)
+                ChapterStageEvent.NavigateGenerationSettings -> navController.navigate(GenerationSettingsRoute)
+                ChapterStageEvent.NavigateGenerationProgress -> navController.navigate(GenerationProgressRoute)
+                ChapterStageEvent.NavigateAgentTrace -> navController.navigate(AgentTraceRoute)
+                ChapterStageEvent.NavigateExperienceViewer -> navController.navigate(ExperienceViewerRoute)
+                ChapterStageEvent.NavigateBack -> navController.popBackStack()
+            }
         }
-    }
-
-    LaunchedEffect(viewerRunKey) {
-        if (viewerRunKey == 0) return@LaunchedEffect
-
-        viewerState = ViewerLoadState.Loading
-        delay(900)
-        viewerState = ViewerLoadState.Loaded
     }
 
     NavHost(
@@ -120,87 +88,110 @@ private fun ChapterStageApp() {
         composable<SplashRoute> {
             SplashScreen(
                 onCreateChapter = {
-                    navController.navigate(HomeRoute)
+                    viewModel.onAction(ChapterStageAction.NavigateCreateChapter)
                 },
                 onViewDemo = {
-                    generationRunKey += 1
-                    navController.navigate(GenerationProgressRoute)
+                    viewModel.onAction(ChapterStageAction.StartDemoFlow)
                 },
             )
         }
         composable<HomeRoute> {
             HomeScreen(
-                recentJobs = content.recentJobs,
-                onCreateChapter = { navController.navigate(CreateChapterRoute) },
+                recentJobs = state.recentJobs,
+                isLoading = state.isHomeLoading,
+                errorMessage = state.homeErrorMessage,
+                onCreateChapter = { viewModel.onAction(ChapterStageAction.NavigateCreateChapter) },
                 onOpenRecentJob = { job ->
-                    if (job.status == "generating") {
-                        snapshot = content.snapshotFor(
-                            revealedEventCount = 7,
-                            elapsedSeconds = 12,
-                            settings = settings,
-                        )
-                        navController.navigate(GenerationProgressRoute)
-                    } else {
-                        snapshot = content.completedSnapshot(settings)
-                        viewerState = ViewerLoadState.Loaded
-                        navController.navigate(ExperienceViewerRoute)
-                    }
+                    viewModel.onAction(ChapterStageAction.OpenRecentJob(job))
                 },
+                onRetryRecentJobs = { viewModel.onAction(ChapterStageAction.LoadHome) },
+                onDismissError = { viewModel.onAction(ChapterStageAction.DismissError) },
             )
         }
         composable<CreateChapterRoute> {
             CreateChapterScreen(
-                sourceMode = sourceMode,
-                draft = sourceDraft,
-                sampleText = content.sampleText,
-                onSourceModeChange = { sourceMode = it },
-                onDraftChange = { sourceDraft = it },
-                onBack = { navController.popBackStack() },
-                onContinue = { navController.navigate(GenerationSettingsRoute) },
+                sourceMode = state.sourceMode,
+                draft = state.sourceDraft,
+                sampleText = state.sampleText,
+                isPickingFile = state.isPickingFile,
+                errorMessage = state.createErrorMessage,
+                onSourceModeChange = { viewModel.onAction(ChapterStageAction.ChangeSourceMode(it)) },
+                onDraftChange = { viewModel.onAction(ChapterStageAction.UpdateSourceDraft(it)) },
+                onPickFile = { viewModel.onAction(ChapterStageAction.PickChapterFile) },
+                onFileSelected = { file -> viewModel.onAction(ChapterStageAction.SelectChapterFile(file)) },
+                onFilePickCancelled = { viewModel.onAction(ChapterStageAction.CancelChapterFilePicker) },
+                onFilePickFailed = { message -> viewModel.onAction(ChapterStageAction.FilePickerFailed(message)) },
+                onRemoveFile = { viewModel.onAction(ChapterStageAction.RemoveChapterFile) },
+                onBack = { viewModel.onAction(ChapterStageAction.NavigateBack) },
+                onContinue = { viewModel.onAction(ChapterStageAction.ContinueToSettings) },
+                onDismissError = { viewModel.onAction(ChapterStageAction.DismissError) },
             )
         }
         composable<GenerationSettingsRoute> {
             GenerationSettingsScreen(
-                settings = settings,
-                onSettingsChange = { settings = it },
-                onBack = { navController.popBackStack() },
+                settings = state.settings,
+                isStartingWorkflow = state.isStartingWorkflow,
+                errorMessage = state.settingsErrorMessage,
+                onSettingsChange = { viewModel.onAction(ChapterStageAction.UpdateSettings(it)) },
+                onBack = { viewModel.onAction(ChapterStageAction.NavigateBack) },
                 onStartWorkflow = {
-                    generationRunKey += 1
-                    navController.navigate(GenerationProgressRoute)
+                    viewModel.onAction(ChapterStageAction.StartWorkflow)
                 },
+                onDismissError = { viewModel.onAction(ChapterStageAction.DismissError) },
             )
         }
         composable<GenerationProgressRoute> {
             GenerationProgressScreen(
-                agents = content.agents,
-                snapshot = snapshot,
-                settings = settings,
-                chapterTitle = sourceDraft.chapterTitle.ifBlank { content.sampleChapterTitle },
-                onBack = { navController.popBackStack() },
-                onViewTrace = { navController.navigate(AgentTraceRoute) },
+                agents = state.agents,
+                snapshot = state.snapshot,
+                settings = state.settings,
+                chapterTitle = state.sourceDraft.chapterTitle.ifBlank { state.sampleChapterTitle },
+                errorMessage = state.progressErrorMessage,
+                onBack = { viewModel.onAction(ChapterStageAction.NavigateBack) },
+                onViewTrace = { viewModel.onAction(ChapterStageAction.ViewTrace) },
                 onOpenViewer = {
-                    viewerRunKey += 1
-                    navController.navigate(ExperienceViewerRoute)
+                    viewModel.onAction(ChapterStageAction.OpenViewer)
                 },
+                onRetry = { viewModel.onAction(ChapterStageAction.RetryProgress) },
+                onDismissError = { viewModel.onAction(ChapterStageAction.DismissError) },
             )
         }
         composable<AgentTraceRoute> {
             AgentTraceScreen(
-                agents = content.agents,
-                snapshot = snapshot,
-                onBack = { navController.popBackStack() },
+                agents = state.agents,
+                snapshot = state.snapshot,
+                errorMessage = state.traceErrorMessage,
+                onBack = { viewModel.onAction(ChapterStageAction.NavigateBack) },
+                onRetry = { viewModel.onAction(ChapterStageAction.RetryTrace) },
+                onDismissError = { viewModel.onAction(ChapterStageAction.DismissError) },
             )
         }
         composable<ExperienceViewerRoute> {
+            val publicUrl = state.snapshot.publicUrl ?: "chapterstage.app/loading"
             ExperienceViewerScreen(
-                state = viewerState,
-                publicUrl = snapshot.publicUrl ?: content.sampleUrl,
-                onBack = { navController.popBackStack() },
-                onRetry = { viewerRunKey += 1 },
+                state = state.viewerState,
+                publicUrl = publicUrl,
+                title = state.snapshot.title
+                    ?: state.sourceDraft.chapterTitle.ifBlank { state.sampleChapterTitle },
+                subtitle = state.snapshot.subtitle
+                    ?: state.sourceDraft.bookTitle.ifBlank { "Generated experience" },
+                errorMessage = state.viewerErrorMessage,
+                onBack = { viewModel.onAction(ChapterStageAction.NavigateBack) },
+                onRetry = { viewModel.onAction(ChapterStageAction.RetryViewer) },
+                onOpenExternal = {
+                    runCatching {
+                        uriHandler.openUri(publicUrl.withHttpsScheme())
+                    }.onFailure {
+                        viewModel.onAction(ChapterStageAction.ExternalViewerOpenFailed)
+                    }
+                },
             )
         }
     }
 }
+
+private fun String.withHttpsScheme(): String =
+    if (startsWith("http://") || startsWith("https://")) this else "https://$this"
 
 private fun stageEnterTransition(forward: Boolean): EnterTransition =
     fadeIn(animationSpec = tween(durationMillis = 180)) +

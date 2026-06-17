@@ -40,7 +40,10 @@ internal fun SourceFields(
     sourceMode: SourceMode,
     draft: ChapterSourceDraft,
     sampleText: String,
+    isPickingFile: Boolean,
     onDraftChange: (ChapterSourceDraft) -> Unit,
+    onPickFile: () -> Unit,
+    onRemoveFile: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -72,7 +75,9 @@ internal fun SourceFields(
             )
             SourceMode.UploadFile -> UploadFileSection(
                 draft = draft,
-                onDraftChange = onDraftChange,
+                isPickingFile = isPickingFile,
+                onPickFile = onPickFile,
+                onRemoveFile = onRemoveFile,
             )
         }
     }
@@ -131,7 +136,9 @@ private fun PasteTextSection(
 @Composable
 private fun UploadFileSection(
     draft: ChapterSourceDraft,
-    onDraftChange: (ChapterSourceDraft) -> Unit,
+    isPickingFile: Boolean,
+    onPickFile: () -> Unit,
+    onRemoveFile: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -141,20 +148,15 @@ private fun UploadFileSection(
         FieldLabel(label = "Upload file")
         if (draft.selectedFileName == null) {
             UploadDropZone(
-                onClick = {
-                    onDraftChange(
-                        draft.copy(
-                            bookTitle = draft.bookTitle.ifBlank { "Living Systems" },
-                            chapterTitle = draft.chapterTitle.ifBlank { "Ch. 4 - Photosynthesis" },
-                            selectedFileName = "photosynthesis-ch4.pdf",
-                        ),
-                    )
-                },
+                isPickingFile = isPickingFile,
+                onClick = onPickFile,
             )
         } else {
             SelectedFileCard(
                 fileName = draft.selectedFileName,
-                onRemove = { onDraftChange(draft.copy(selectedFileName = null)) },
+                fileSizeLabel = draft.selectedFileSizeLabel,
+                fileExtension = draft.selectedFileExtension,
+                onRemove = onRemoveFile,
             )
         }
         Text(
@@ -188,7 +190,7 @@ internal fun CreateGuidanceCard(
                 sourceMode == SourceMode.PasteText ->
                     "The source is long enough for a realistic agent workflow preview."
                 draft.selectedFileName == null ->
-                    "Tap the upload well to simulate a supported chapter file."
+                    "Tap the upload well to choose a supported chapter file."
                 else ->
                     "The selected file is ready for the settings step."
             },
@@ -226,6 +228,7 @@ private fun UseSampleChip(
 
 @Composable
 private fun UploadDropZone(
+    isPickingFile: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -236,7 +239,7 @@ private fun UploadDropZone(
             .clip(MaterialTheme.shapes.large)
             .background(MaterialTheme.stageColors.surface)
             .border(BorderStroke(1.dp, MaterialTheme.stageColors.lineHigh), MaterialTheme.shapes.large)
-            .clickable(onClick = onClick),
+            .clickable(enabled = !isPickingFile, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Column(
@@ -245,7 +248,7 @@ private fun UploadDropZone(
         ) {
             StageIconBadge(text = "UP", color = MaterialTheme.stageColors.primary)
             Text(
-                text = "Drop a file or tap to browse",
+                text = if (isPickingFile) "Opening file picker..." else "Drop a file or tap to browse",
                 color = MaterialTheme.stageColors.textPrimary,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
@@ -267,9 +270,15 @@ private fun UploadDropZone(
 @Composable
 private fun SelectedFileCard(
     fileName: String,
+    fileSizeLabel: String?,
+    fileExtension: String?,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val extensionLabel = fileExtension
+        ?: fileName.substringAfterLast('.', missingDelimiterValue = "FILE").uppercase()
+    val detailText = fileSizeLabel?.let { "$it - selected" } ?: "Ready to upload"
+
     StageCard(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(MaterialTheme.spacing.medium),
@@ -278,7 +287,10 @@ private fun SelectedFileCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
         ) {
-            StageIconBadge(text = "PDF", color = MaterialTheme.stageColors.error)
+            StageIconBadge(
+                text = extensionLabel,
+                color = if (extensionLabel == "PDF") MaterialTheme.stageColors.error else MaterialTheme.stageColors.cyan,
+            )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = fileName,
@@ -287,7 +299,7 @@ private fun SelectedFileCard(
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    text = "248 KB - extracted",
+                    text = detailText,
                     color = MaterialTheme.stageColors.textTertiary,
                     style = MaterialTheme.typography.labelSmall,
                     fontFamily = FontFamily.Monospace,

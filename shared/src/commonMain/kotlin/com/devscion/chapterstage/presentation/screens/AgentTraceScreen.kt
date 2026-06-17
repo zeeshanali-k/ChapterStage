@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.devscion.chapterstage.design.ChapterStageTheme
 import com.devscion.chapterstage.design.spacing
+import com.devscion.chapterstage.presentation.components.StageInlineError
 import com.devscion.chapterstage.presentation.components.StageScreen
 import com.devscion.chapterstage.presentation.components.StageTopBar
 import com.devscion.chapterstage.presentation.model.AgentUiModel
@@ -25,7 +26,10 @@ import com.devscion.chapterstage.presentation.model.GenerationSnapshot
 fun AgentTraceScreen(
     agents: List<AgentUiModel>,
     snapshot: GenerationSnapshot,
+    errorMessage: String?,
     onBack: () -> Unit,
+    onRetry: () -> Unit,
+    onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val spacing = MaterialTheme.spacing
@@ -38,6 +42,16 @@ fun AgentTraceScreen(
             onBack = onBack,
         )
         Spacer(modifier = Modifier.height(spacing.medium))
+        if (errorMessage != null) {
+            StageInlineError(
+                modifier = Modifier.fillMaxWidth(),
+                title = "Trace could not refresh",
+                message = errorMessage,
+                onRetry = onRetry,
+                onDismiss = onDismissError,
+            )
+            Spacer(modifier = Modifier.height(spacing.medium))
+        }
 
         if (layout.isWide) {
             Row(
@@ -79,8 +93,10 @@ private fun AgentTraceScreenPreview() {
         AgentTraceScreen(
             agents = content.agents,
             snapshot = content.completedSnapshot(settings),
+            errorMessage = null,
             onBack = {},
+            onRetry = {},
+            onDismissError = {},
         )
     }
 }
-

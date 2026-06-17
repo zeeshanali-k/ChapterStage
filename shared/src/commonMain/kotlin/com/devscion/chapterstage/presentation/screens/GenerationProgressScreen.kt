@@ -17,6 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.devscion.chapterstage.design.ChapterStageTheme
 import com.devscion.chapterstage.design.stageColors
 import com.devscion.chapterstage.design.spacing
+import com.devscion.chapterstage.presentation.components.StageInlineError
 import com.devscion.chapterstage.presentation.components.StageScreen
 import com.devscion.chapterstage.presentation.components.StageTopBar
 import com.devscion.chapterstage.presentation.model.AgentUiModel
@@ -30,9 +31,12 @@ fun GenerationProgressScreen(
     snapshot: GenerationSnapshot,
     settings: GenerationSettingsDraft,
     chapterTitle: String,
+    errorMessage: String?,
     onBack: () -> Unit,
     onViewTrace: () -> Unit,
     onOpenViewer: () -> Unit,
+    onRetry: () -> Unit,
+    onDismissError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val spacing = MaterialTheme.spacing
@@ -53,6 +57,16 @@ fun GenerationProgressScreen(
             },
         )
         Spacer(modifier = Modifier.height(spacing.medium))
+        if (errorMessage != null) {
+            StageInlineError(
+                modifier = Modifier.fillMaxWidth(),
+                title = "Workflow updates paused",
+                message = errorMessage,
+                onRetry = onRetry,
+                onDismiss = onDismissError,
+            )
+            Spacer(modifier = Modifier.height(spacing.medium))
+        }
 
         if (layout.isWide) {
             Row(
@@ -123,6 +137,9 @@ private fun GenerationProgressScreenPreview() {
             onBack = {},
             onViewTrace = {},
             onOpenViewer = {},
+            errorMessage = null,
+            onRetry = {},
+            onDismissError = {},
         )
     }
 }

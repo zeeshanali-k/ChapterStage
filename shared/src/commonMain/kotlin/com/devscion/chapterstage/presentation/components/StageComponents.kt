@@ -194,6 +194,136 @@ fun StageCard(
 }
 
 @Composable
+fun StageInlineError(
+    message: String,
+    modifier: Modifier = Modifier,
+    title: String = "Something needs attention",
+    onRetry: (() -> Unit)? = null,
+    onDismiss: (() -> Unit)? = null,
+) {
+    StageCard(
+        modifier = modifier.fillMaxWidth(),
+        accent = MaterialTheme.stageColors.error,
+        contentPadding = PaddingValues(MaterialTheme.spacing.medium),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
+            verticalAlignment = Alignment.Top,
+        ) {
+            StageIconBadge(text = "!", color = MaterialTheme.stageColors.error)
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.extraSmall),
+            ) {
+                Text(
+                    text = title,
+                    color = MaterialTheme.stageColors.textPrimary,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = message,
+                    color = MaterialTheme.stageColors.textSecondary,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        }
+        if (onRetry != null || onDismiss != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = MaterialTheme.spacing.medium),
+                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
+            ) {
+                if (onRetry != null) {
+                    StageButton(
+                        modifier = Modifier.weight(1f),
+                        text = "Retry",
+                        onClick = onRetry,
+                        variant = StageButtonVariant.Soft,
+                    )
+                }
+                if (onDismiss != null) {
+                    StageButton(
+                        modifier = Modifier.weight(1f),
+                        text = "Dismiss",
+                        onClick = onDismiss,
+                        variant = StageButtonVariant.Ghost,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StageEmptyState(
+    title: String,
+    message: String,
+    modifier: Modifier = Modifier,
+    actionText: String? = null,
+    onAction: (() -> Unit)? = null,
+) {
+    StageCard(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(MaterialTheme.spacing.medium),
+    ) {
+        StageLabel(text = "EMPTY")
+        Text(
+            modifier = Modifier.padding(top = MaterialTheme.spacing.small),
+            text = title,
+            color = MaterialTheme.stageColors.textPrimary,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            modifier = Modifier.padding(top = MaterialTheme.spacing.extraSmall),
+            text = message,
+            color = MaterialTheme.stageColors.textSecondary,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        if (actionText != null && onAction != null) {
+            StageButton(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = MaterialTheme.spacing.medium),
+                text = actionText,
+                onClick = onAction,
+                variant = StageButtonVariant.Ghost,
+            )
+        }
+    }
+}
+
+@Composable
+fun StageLoadingNotice(
+    message: String,
+    modifier: Modifier = Modifier,
+) {
+    StageCard(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(MaterialTheme.spacing.medium),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
+        ) {
+            StatusDot(
+                status = AgentStatus.Active,
+                color = MaterialTheme.stageColors.primary,
+            )
+            Text(
+                text = message,
+                color = MaterialTheme.stageColors.textSecondary,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+    }
+}
+
+@Composable
 fun StageLabel(
     text: String,
     modifier: Modifier = Modifier,
