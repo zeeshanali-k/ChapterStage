@@ -6,6 +6,7 @@ android-targetSdk = "37"
 androidx-activity = "1.13.0"
 androidx-appcompat = "1.7.1"
 androidx-core = "1.19.0"
+composeWebviewMultiplatform = "2.0.3"
 kotlinx-serialization = "1.11.0"
 androidx-espresso = "3.7.0"
 androidx-lifecycle = "2.11.0-beta01"
@@ -25,6 +26,7 @@ logback = "1.5.34"
 filekit = "0.14.2"
 
 [libraries]
+compose-webview-multiplatform = { module = "io.github.kevinnzou:compose-webview-multiplatform", version.ref = "composeWebviewMultiplatform" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }

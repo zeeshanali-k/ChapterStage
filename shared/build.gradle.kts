@@ -107,6 +107,8 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.ktor.client.okhttp)
+            //Web View
+            implementation(libs.compose.webview.multiplatform)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -147,9 +149,13 @@ kotlin {
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+            //Web View
+            implementation(libs.compose.webview.multiplatform)
         }
         wasmJsMain.dependencies {
             implementation(libs.ktor.client.js)
+            //Web View
+            implementation(libs.compose.webview.multiplatform)
         }
         jsMain.dependencies {
             implementation(libs.wrappers.browser)
