@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 
 class ExperienceMappersTest {
     @Test
-    fun `given metadata response without title, when mapped, then safe defaults are used`() {
+    fun `given metadata response without title when mapped then safe defaults are used`() {
         val response = ExperienceMetadataResponse(
             experienceId = "experience-1",
             title = null,

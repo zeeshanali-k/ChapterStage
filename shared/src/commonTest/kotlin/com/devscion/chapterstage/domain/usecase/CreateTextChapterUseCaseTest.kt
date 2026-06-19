@@ -16,7 +16,7 @@ class CreateTextChapterUseCaseTest {
     private val useCase = CreateTextChapterUseCase(repository)
 
     @Test
-    fun `given short chapter text, when invoked, then validation error is returned`() = runTest {
+    fun `given short chapter text when invoked then validation error is returned`() = runTest {
         val result = useCase(
             ChapterInput(
                 bookTitle = null,
@@ -31,7 +31,7 @@ class CreateTextChapterUseCaseTest {
     }
 
     @Test
-    fun `given valid chapter text, when invoked, then repository receives trimmed text`() = runTest {
+    fun `given valid chapter text when invoked then repository receives trimmed text`() = runTest {
         val text = " ".repeat(2) + "a".repeat(500) + " "
 
         val result = useCase(

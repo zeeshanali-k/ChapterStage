@@ -78,8 +78,8 @@ internal fun ViewerTopBar(
                 .clip(controlShape)
                 .clickable(onClick = onOpenExternal),
             shape = controlShape,
-            color = Color.White.copy(alpha = 0.04f),
-            border = BorderStroke(1.dp, MaterialTheme.stageColors.line),
+            color = MaterialTheme.stageColors.surfaceElement,
+            border = BorderStroke(1.dp, MaterialTheme.stageColors.lineHigh),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Text(
@@ -104,8 +104,8 @@ internal fun BrowserChrome(
         modifier = modifier
             .fillMaxWidth()
             .clip(chromeShape)
-            .background(MaterialTheme.stageColors.backgroundHigh)
-            .border(BorderStroke(1.dp, MaterialTheme.stageColors.line), chromeShape)
+            .background(MaterialTheme.stageColors.glassSurface)
+            .border(BorderStroke(1.dp, MaterialTheme.stageColors.lineHigh), chromeShape)
             .padding(horizontal = MaterialTheme.spacing.medium, vertical = MaterialTheme.spacing.small),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
@@ -122,7 +122,7 @@ internal fun BrowserChrome(
         Surface(
             modifier = Modifier.weight(1f),
             shape = MaterialTheme.shapes.small,
-            color = Color.White.copy(alpha = 0.03f),
+            color = Color.White.copy(alpha = 0.07f),
         ) {
             Text(
                 modifier = Modifier.padding(vertical = MaterialTheme.spacing.xSmall),
@@ -262,6 +262,7 @@ internal fun HostedExperienceReady(
         StageCard(
             accent = MaterialTheme.stageColors.success,
             contentPadding = androidx.compose.foundation.layout.PaddingValues(MaterialTheme.spacing.large),
+            sharedKey = "chapterstage-result-panel",
         ) {
             StageLabel(
                 text = "READY",
@@ -288,6 +289,7 @@ internal fun HostedExperienceReady(
                 text = "Open Experience",
                 onClick = onOpenExternal,
                 leadingText = "EX",
+                sharedKey = "chapterstage-primary-action",
             )
         }
     }
@@ -304,7 +306,7 @@ private fun LoadingBlock(
             .height(height)
             .padding(bottom = MaterialTheme.spacing.medium)
             .clip(MaterialTheme.shapes.large)
-            .background(Color.White.copy(alpha = 0.05f)),
+            .background(Color.White.copy(alpha = 0.08f)),
     )
 }
 
@@ -319,6 +321,6 @@ private fun LoadingLine(
             .height(14.dp)
             .padding(bottom = MaterialTheme.spacing.medium)
             .clip(MaterialTheme.shapes.extraSmall)
-            .background(Color.White.copy(alpha = 0.05f)),
+            .background(Color.White.copy(alpha = 0.08f)),
     )
 }

@@ -55,7 +55,16 @@ internal fun ProgressOverviewCard(
     snapshot: GenerationSnapshot,
     modifier: Modifier = Modifier,
 ) {
-    StageCard(modifier = modifier.fillMaxWidth()) {
+    val progressColor = if (snapshot.isComplete) {
+        MaterialTheme.stageColors.success
+    } else {
+        MaterialTheme.stageColors.primary
+    }
+
+    StageCard(
+        modifier = modifier.fillMaxWidth(),
+        sharedKey = "chapterstage-primary-panel",
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -64,7 +73,7 @@ internal fun ProgressOverviewCard(
             Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = "${snapshot.progress}%",
-                color = if (snapshot.isComplete) MaterialTheme.stageColors.success else MaterialTheme.stageColors.primary,
+                color = progressColor,
                 style = MaterialTheme.typography.titleMedium,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Bold,
@@ -73,7 +82,7 @@ internal fun ProgressOverviewCard(
         StageProgressBar(
             modifier = Modifier.padding(top = MaterialTheme.spacing.medium),
             progress = snapshot.progress,
-            color = if (snapshot.isComplete) MaterialTheme.stageColors.success else MaterialTheme.stageColors.primary,
+            color = progressColor,
         )
         AgentStrip(
             modifier = Modifier.padding(top = MaterialTheme.spacing.large),
@@ -210,6 +219,7 @@ internal fun CompletedExperienceCard(
     StageCard(
         modifier = modifier.fillMaxWidth(),
         accent = MaterialTheme.stageColors.success,
+        sharedKey = "chapterstage-result-panel",
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
@@ -255,6 +265,7 @@ internal fun CompletedExperienceCard(
             onClick = onOpenViewer,
             large = true,
             trailingText = "->",
+            sharedKey = "chapterstage-primary-action",
         )
         StageButton(
             modifier = Modifier

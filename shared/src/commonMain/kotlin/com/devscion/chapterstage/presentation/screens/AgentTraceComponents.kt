@@ -30,9 +30,16 @@ internal fun TraceRoomCard(
     snapshot: GenerationSnapshot,
     modifier: Modifier = Modifier,
 ) {
+    val statusColor = if (snapshot.isComplete) {
+        MaterialTheme.stageColors.success
+    } else {
+        MaterialTheme.stageColors.primary
+    }
+
     StageCard(
         modifier = modifier.fillMaxWidth(),
-        accent = if (snapshot.isComplete) MaterialTheme.stageColors.success else MaterialTheme.stageColors.primary,
+        accent = statusColor,
+        sharedKey = "chapterstage-primary-panel",
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
@@ -40,12 +47,12 @@ internal fun TraceRoomCard(
         ) {
             StageIconBadge(
                 text = "BR",
-                color = if (snapshot.isComplete) MaterialTheme.stageColors.success else MaterialTheme.stageColors.primary,
+                color = statusColor,
             )
             Column(modifier = Modifier.weight(1f)) {
                 StageLabel(
                     text = if (snapshot.isComplete) "PUBLISHED TRACE" else "LIVE TRACE",
-                    dotColor = if (snapshot.isComplete) MaterialTheme.stageColors.success else MaterialTheme.stageColors.primary,
+                    dotColor = statusColor,
                 )
                 Text(
                     modifier = Modifier.padding(top = MaterialTheme.spacing.xSmall),
@@ -67,9 +74,17 @@ internal fun TraceRoomCard(
                 .padding(top = MaterialTheme.spacing.medium),
             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
         ) {
-            TraceStatCell(label = "EVENTS", value = snapshot.events.size.toString(), modifier = Modifier.weight(1f))
+            TraceStatCell(
+                label = "EVENTS",
+                value = snapshot.events.size.toString(),
+                modifier = Modifier.weight(1f),
+            )
             TraceStatCell(label = "ROOM", value = "PX", modifier = Modifier.weight(1f))
-            TraceStatCell(label = "STATE", value = if (snapshot.isComplete) "DONE" else "LIVE", modifier = Modifier.weight(1f))
+            TraceStatCell(
+                label = "STATE",
+                value = if (snapshot.isComplete) "DONE" else "LIVE",
+                modifier = Modifier.weight(1f),
+            )
         }
         BandRoomBadge(
             modifier = Modifier.padding(top = MaterialTheme.spacing.medium),

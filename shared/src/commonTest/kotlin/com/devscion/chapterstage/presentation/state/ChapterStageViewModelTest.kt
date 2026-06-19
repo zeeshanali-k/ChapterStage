@@ -40,7 +40,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChapterStageViewModelTest {
     @Test
-    fun `given selected text file, when action arrives, then draft contains file metadata`() = runTest {
+    fun `given selected text file when action arrives then draft contains file metadata`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
 
@@ -73,7 +73,7 @@ class ChapterStageViewModelTest {
     }
 
     @Test
-    fun `given unsupported file, when selected, then create error is shown`() = runTest {
+    fun `given unsupported file when selected then create error is shown`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
 
@@ -104,7 +104,7 @@ class ChapterStageViewModelTest {
     }
 
     @Test
-    fun `given completed recent job, when opened, then viewer uses backend url`() = runTest {
+    fun `given completed recent job when opened then viewer uses backend url`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
 
