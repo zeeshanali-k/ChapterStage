@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.devscion.chapterstage.design.ChapterStageTheme
 import com.devscion.chapterstage.design.stageColors
+import com.devscion.chapterstage.presentation.components.HostedExperienceWebView
 import com.devscion.chapterstage.presentation.model.ViewerLoadState
 
 @Composable
@@ -65,9 +66,9 @@ fun ExperienceViewerScreen(
                 onRetry = onRetry,
                 onOpenExternal = onOpenExternal,
             )
-            ViewerLoadState.Loaded -> HostedExperienceReady(
-                publicUrl = publicUrl,
-                onOpenExternal = onOpenExternal,
+            ViewerLoadState.Loaded -> HostedExperienceWebView(
+                url = publicUrl,
+                modifier = Modifier.fillMaxSize(),
             )
         }
     }
