@@ -26,6 +26,7 @@ import com.devscion.chapterstage.presentation.model.ViewerLoadState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -213,6 +214,20 @@ class ChapterStageViewModel(
 
     private fun observeGeneration(jobId: String) {
         generationJob = viewModelScope.launch {
+            val elapsedSeconds = MutableStateFlow(0)
+
+            val tickerJob = launch {
+                while (isActive) {
+                    delay(1_000)
+                    if (_state.value.snapshot.isComplete || _state.value.snapshot.jobId != jobId) break
+                    elapsedSeconds.value += 1
+                    _state.update { state ->
+                        if (state.snapshot.isComplete || state.snapshot.jobId != jobId) return@update state
+                        state.copy(snapshot = state.snapshot.copy(elapsedSeconds = elapsedSeconds.value))
+                    }
+                }
+            }
+
             observeGenerationEvents(jobId)
                 .catch { throwable ->
                     setError(throwable = throwable, surface = ErrorSurface.Progress)
@@ -221,11 +236,14 @@ class ChapterStageViewModel(
                 .collect { job ->
                     _state.update { state ->
                         state.copy(
-                            snapshot = job.toUiSnapshot(agents = demoContent.agents),
+                            snapshot = job.toUiSnapshot(agents = demoContent.agents)
+                                .copy(elapsedSeconds = elapsedSeconds.value),
                             progressErrorMessage = job.errorMessage,
                         )
                     }
                 }
+
+            tickerJob.cancel()
         }
     }
 

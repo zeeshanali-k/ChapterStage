@@ -84,6 +84,7 @@ import com.devscion.chapterstage.design.spacing
 import com.devscion.chapterstage.presentation.model.AgentStatus
 import com.devscion.chapterstage.presentation.model.AgentUiModel
 import com.devscion.chapterstage.presentation.model.TraceEventUiModel
+import com.devscion.chapterstage.presentation.screens.formatElapsed
 
 @Immutable
 data class StageLayoutInfo(
@@ -1178,7 +1179,7 @@ fun TraceEventRow(
                 }
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = event.timestamp,
+                    text = event.elapsedSeconds?.let { formatElapsed(it) } ?: event.timestamp,
                     color = colors.textTertiary,
                     style = MaterialTheme.typography.labelSmall,
                     fontFamily = FontFamily.Monospace,

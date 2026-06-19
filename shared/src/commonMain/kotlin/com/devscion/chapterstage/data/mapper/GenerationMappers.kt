@@ -76,6 +76,7 @@ fun AgentTraceEventDto.toDomain(): AgentTraceEvent =
         message = message,
         timestamp = createdAt,
         payload = payload.toPayloadPreview(),
+        elapsedSeconds = elapsedSeconds,
     )
 
 fun RecentGenerationJobDto.toDomain(): RecentGenerationJob =

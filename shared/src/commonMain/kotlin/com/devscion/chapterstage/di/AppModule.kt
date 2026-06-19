@@ -31,6 +31,7 @@ import org.koin.core.annotation.Single
 @Module
 @ComponentScan("com.devscion.chapterstage")
 class AppModule {
+
     @Single
     fun provideChapterStageConfig(): ChapterStageConfig =
         ChapterStageConfig(

@@ -35,6 +35,7 @@ fun GenerationStreamEventDto.toTraceEvent(
         message = resolvedMessage ?: "The workflow sent an update.",
         timestamp = createdAt ?: updatedAt ?: "now",
         payload = payload.toPayloadPreview(),
+        elapsedSeconds = elapsedSeconds,
     )
 }
 
@@ -58,7 +59,11 @@ fun GenerationStreamEventDto.toDomainJob(
         chapterId = chapterId ?: previous?.chapterId ?: "",
         status = resolvedStatus,
         progress = if (resolvedStatus == "completed") 100 else resolvedProgress,
-        currentStep = currentStep ?: title ?: previous?.currentStep ?: "Running",
+        currentStep = currentStep?.ifBlank { null }
+            ?: title?.ifBlank { null }
+            ?: message?.ifBlank { null }
+            ?: previous?.currentStep
+            ?: "Running",
         activeAgentId = if (resolvedStatus == "completed") null else resolvedActiveAgentId,
         agentStatuses = resolvedAgentStatuses(
             status = resolvedStatus,

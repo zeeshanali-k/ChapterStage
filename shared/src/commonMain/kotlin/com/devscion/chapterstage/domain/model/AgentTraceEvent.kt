@@ -9,4 +9,5 @@ data class AgentTraceEvent(
     val message: String,
     val timestamp: String,
     val payload: String? = null,
+    val elapsedSeconds: Int? = null,
 )

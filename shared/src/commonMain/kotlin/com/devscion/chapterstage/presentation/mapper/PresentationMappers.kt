@@ -127,4 +127,5 @@ fun AgentTraceEvent.toUiModel(): TraceEventUiModel =
         message = message,
         timestamp = timestamp,
         payload = payload,
+        elapsedSeconds = elapsedSeconds,
     )
