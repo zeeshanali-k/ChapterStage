@@ -110,15 +110,15 @@ internal fun BrowserChrome(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
     ) {
-        listOf(MaterialTheme.stageColors.error, MaterialTheme.stageColors.warning, MaterialTheme.stageColors.success)
-            .forEach { color ->
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(color.copy(alpha = 0.72f)),
-                )
-            }
+//        listOf(MaterialTheme.stageColors.error, MaterialTheme.stageColors.warning, MaterialTheme.stageColors.success)
+//            .forEach { color ->
+//                Box(
+//                    modifier = Modifier
+//                        .size(8.dp)
+//                        .clip(CircleShape)
+//                        .background(color.copy(alpha = 0.72f)),
+//                )
+//            }
         Surface(
             modifier = Modifier.weight(1f),
             shape = MaterialTheme.shapes.small,
