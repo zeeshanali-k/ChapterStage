@@ -60,6 +60,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -84,6 +87,8 @@ import com.devscion.chapterstage.design.spacing
 import com.devscion.chapterstage.presentation.model.AgentStatus
 import com.devscion.chapterstage.presentation.model.AgentUiModel
 import com.devscion.chapterstage.presentation.model.TraceEventUiModel
+import com.devscion.chapterstage.presentation.screens.formatElapsed
+import kotlinx.serialization.json.Json
 
 @Immutable
 data class StageLayoutInfo(
@@ -1116,11 +1121,14 @@ fun TraceEventRow(
 ) {
     val colors = MaterialTheme.stageColors
     val accent = eventAccentColor(event = event, agentColor = agent.color)
+    var expanded by remember(event.id) { mutableStateOf(false) }
+    val hasPayload = !event.payload.isNullOrBlank()
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .animateContentSize(animationSpec = spring()),
+            .animateContentSize(animationSpec = spring())
+            .then(if (hasPayload) Modifier.clickable { expanded = !expanded } else Modifier),
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
     ) {
         Column(
@@ -1178,11 +1186,19 @@ fun TraceEventRow(
                 }
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = event.timestamp,
+                    text = event.elapsedSeconds?.let { formatElapsed(it) } ?: event.timestamp,
                     color = colors.textTertiary,
                     style = MaterialTheme.typography.labelSmall,
                     fontFamily = FontFamily.Monospace,
                 )
+                if (hasPayload) {
+                    Text(
+                        text = if (expanded) "▼" else "▶",
+                        color = colors.textTertiary,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                }
             }
 
             Text(
@@ -1198,7 +1214,7 @@ fun TraceEventRow(
                 color = colors.textSecondary,
                 style = MaterialTheme.typography.bodyMedium,
             )
-            if (event.payload != null) {
+            if (expanded && hasPayload) {
                 Surface(
                     modifier = Modifier
                         .padding(top = MaterialTheme.spacing.small)
@@ -1212,7 +1228,7 @@ fun TraceEventRow(
                             horizontal = MaterialTheme.spacing.small,
                             vertical = MaterialTheme.spacing.small,
                         ),
-                        text = event.payload,
+                        text = formatTracePayload(event.payload),
                         color = colors.textSecondary,
                         style = MaterialTheme.typography.labelSmall,
                         fontFamily = FontFamily.Monospace,
@@ -1319,3 +1335,14 @@ private fun eventAccentColor(event: TraceEventUiModel, agentColor: Color): Color
         "Published" -> Color(0xFF7BE0C3)
         else -> agentColor
     }
+
+private fun formatTracePayload(raw: String?): String {
+    if (raw.isNullOrBlank()) return ""
+    return try {
+        val json = Json { prettyPrint = true }
+        val element = json.parseToJsonElement(raw)
+        json.encodeToString(element)
+    } catch (_: Exception) {
+        raw
+    }
+}

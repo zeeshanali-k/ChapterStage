@@ -117,6 +117,7 @@ data class TraceEventUiModel(
     val message: String,
     val timestamp: String,
     val payload: String? = null,
+    val elapsedSeconds: Int? = null,
 )
 
 @Immutable
@@ -173,28 +174,12 @@ class ChapterStageDemoContent {
 
     val agents: List<AgentUiModel> = listOf(
         AgentUiModel(
-            id = "coordinator",
-            name = "Coordinator",
-            shortName = "Coord",
-            initials = "CO",
-            role = "Orchestrates the Band",
-            color = Color(0xFF7C5CFF),
-        ),
-        AgentUiModel(
             id = "structure",
             name = "Structure",
             shortName = "Structure",
             initials = "ST",
             role = "Maps the chapter",
             color = Color(0xFF22D3EE),
-        ),
-        AgentUiModel(
-            id = "pedagogy",
-            name = "Pedagogy",
-            shortName = "Pedagogy",
-            initials = "PE",
-            role = "Finds learner confusions",
-            color = Color(0xFF2EE59D),
         ),
         AgentUiModel(
             id = "brainstorm",
@@ -252,105 +237,72 @@ class ChapterStageDemoContent {
     val traceEvents: List<TraceEventUiModel> = listOf(
         TraceEventUiModel(
             id = "event-1",
-            agentId = "coordinator",
-            type = "Delegated",
-            title = "Briefed the Band",
-            message = "Routed the chapter to five specialists.",
+            agentId = "structure",
+            type = "Analyzed",
+            title = "Reading source",
+            message = "Extracting sections, figures, and key terms from the chapter.",
             timestamp = "00:01",
-            payload = "job#PX-4471 - style=Visual Story - level=Intermediate",
+            payload = """{"source_ref":"Living Systems - Ch.4","style":"Visual Story","level":"Intermediate"}""",
         ),
         TraceEventUiModel(
             id = "event-2",
             agentId = "structure",
-            type = "Analyzed",
-            title = "Mapping the chapter",
-            message = "Reading sections, figures and key terms.",
-            timestamp = "00:03",
-        ),
-        TraceEventUiModel(
-            id = "event-3",
-            agentId = "structure",
             type = "Generated",
             title = "Chapter map ready",
             message = "6 core concepts, 3 sub-topics, 11 key terms.",
+            timestamp = "00:03",
+            payload = """{"sections":["light reactions","Calvin cycle"],"ideas":["chlorophyll","ATP","NADPH"]}""",
+        ),
+        TraceEventUiModel(
+            id = "event-3",
+            agentId = "brainstorm",
+            type = "Brainstormed",
+            title = "Format candidates",
+            message = "Visual Story, Lecture, Map-first, Quiz-first, Case.",
             timestamp = "00:05",
-            payload = "light reactions - Calvin cycle - chlorophyll - ATP",
+            payload = """{"candidates":[{"variant_id":"visual","score":0.91},{"variant_id":"case","score":0.78}]}""",
         ),
         TraceEventUiModel(
             id = "event-4",
-            agentId = "pedagogy",
-            type = "Analyzed",
-            title = "Finding confusions",
-            message = "Flagged 4 misconceptions learners commonly hold.",
-            timestamp = "00:07",
-            payload = "plants eat soil - photosynthesis equals breathing",
-        ),
-        TraceEventUiModel(
-            id = "event-5",
-            agentId = "brainstorm",
-            type = "Brainstormed",
-            title = "Five format concepts",
-            message = "Visual Story, Lecture, Map-first, Quiz-first, Case.",
-            timestamp = "00:09",
-        ),
-        TraceEventUiModel(
-            id = "event-6",
-            agentId = "brainstorm",
-            type = "Scored",
-            title = "Scored concepts",
-            message = "Visual Story leads on clarity and engagement.",
-            timestamp = "00:11",
-            payload = "visual 0.91 - case 0.78 - map 0.74 - quiz 0.70",
-        ),
-        TraceEventUiModel(
-            id = "event-7",
-            agentId = "brainstorm",
-            type = "Rejected",
-            title = "Dropped Quiz-first",
-            message = "Too abstract before the core idea lands.",
-            timestamp = "00:12",
-        ),
-        TraceEventUiModel(
-            id = "event-8",
             agentId = "brainstorm",
             type = "Selected",
             title = "Selected Visual Story",
-            message = "Handing the blueprint to Visual Builder.",
-            timestamp = "00:13",
+            message = "Visual Story leads on clarity and engagement. Handing blueprint to Visual Builder.",
+            timestamp = "00:07",
         ),
         TraceEventUiModel(
-            id = "event-9",
+            id = "event-5",
             agentId = "visual",
             type = "Generated",
             title = "Building scenes",
             message = "Composing interactive scenes with diagrams.",
-            timestamp = "00:15",
+            timestamp = "00:09",
         ),
         TraceEventUiModel(
-            id = "event-10",
+            id = "event-6",
             agentId = "visual",
             type = "Generated",
             title = "8 scenes built",
             message = "Hook, chapter map, four concepts, quiz, recap.",
-            timestamp = "00:18",
-            payload = "site 86 KB - no external scripts - 360px OK",
+            timestamp = "00:12",
+            payload = """{"site_size_kb":86,"external_scripts":false,"mobile_ok":true}""",
         ),
         TraceEventUiModel(
-            id = "event-11",
+            id = "event-7",
             agentId = "verifier",
             type = "Verified",
             title = "Faithfulness and safety",
-            message = "Cross-checked every claim against the source.",
-            timestamp = "00:20",
-            payload = "faithfulness 0.96 - safety PASS",
+            message = "Cross-checked every claim against the source chapter.",
+            timestamp = "00:15",
+            payload = """{"faithfulness":0.96,"safety":"PASS"}""",
         ),
         TraceEventUiModel(
-            id = "event-12",
-            agentId = "coordinator",
+            id = "event-8",
+            agentId = "visual",
             type = "Published",
             title = "Experience published",
             message = "Interactive chapter is live and shareable.",
-            timestamp = "00:22",
+            timestamp = "00:17",
         ),
     )
 
@@ -363,22 +315,18 @@ class ChapterStageDemoContent {
         val isComplete = revealedEventCount >= traceEvents.size
         val activeAgentId = when {
             isComplete -> null
-            revealedEventCount <= 1 -> "coordinator"
-            revealedEventCount <= 3 -> "structure"
-            revealedEventCount <= 4 -> "pedagogy"
-            revealedEventCount <= 8 -> "brainstorm"
-            revealedEventCount <= 10 -> "visual"
+            revealedEventCount <= 2 -> "structure"
+            revealedEventCount <= 4 -> "brainstorm"
+            revealedEventCount <= 6 -> "visual"
             else -> "verifier"
         }
 
         val completedAgents = when {
             isComplete -> agents.map { it.id }.toSet()
-            revealedEventCount <= 1 -> emptySet()
-            revealedEventCount <= 3 -> setOf("coordinator")
-            revealedEventCount <= 4 -> setOf("coordinator", "structure")
-            revealedEventCount <= 8 -> setOf("coordinator", "structure", "pedagogy")
-            revealedEventCount <= 10 -> setOf("coordinator", "structure", "pedagogy", "brainstorm")
-            else -> setOf("coordinator", "structure", "pedagogy", "brainstorm", "visual")
+            revealedEventCount <= 2 -> emptySet()
+            revealedEventCount <= 4 -> setOf("structure")
+            revealedEventCount <= 6 -> setOf("structure", "brainstorm")
+            else -> setOf("structure", "brainstorm", "visual")
         }
 
         val statuses = agents.associate { agent ->

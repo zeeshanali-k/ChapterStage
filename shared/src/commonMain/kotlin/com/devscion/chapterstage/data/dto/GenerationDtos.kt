@@ -77,19 +77,17 @@ data class RecentGenerationJobsResponse(
 @Serializable
 data class RecentGenerationJobDto(
     @SerialName("job_id") val jobId: String,
-    @SerialName("chapter_id") val chapterId: String? = null,
-    val title: String? = null,
-    val book: String? = null,
-    val status: String = "unknown",
-    val progress: Double = 0.0,
+    @SerialName("chapter_id") val chapterId: String,
+    val status: String,
+    val progress: Double,
     @SerialName("current_step") val currentStep: String? = null,
     @SerialName("band_room_id") val bandRoomId: String? = null,
+    @SerialName("band_room_url") val bandRoomUrl: String? = null,
     @SerialName("experience_id") val experienceId: String? = null,
     @SerialName("public_url") val publicUrl: String? = null,
     val error: ApiErrorBody? = null,
-    val style: String? = null,
-    @SerialName("created_at") val createdAt: String? = null,
-    @SerialName("updated_at") val updatedAt: String? = null,
+    @SerialName("created_at") val createdAt: String,
+    @SerialName("updated_at") val updatedAt: String,
 )
 
 @Serializable

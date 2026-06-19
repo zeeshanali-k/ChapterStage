@@ -19,6 +19,7 @@ data class AgentTraceEventDto(
     @SerialName("event_type") val eventType: String,
     val title: String,
     val message: String,
+    @SerialName("elapsed_seconds") val elapsedSeconds: Int? = null,
     @SerialName("created_at") val createdAt: String,
     val payload: JsonElement? = null,
 )

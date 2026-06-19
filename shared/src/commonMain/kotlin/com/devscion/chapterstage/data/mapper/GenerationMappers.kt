@@ -17,6 +17,8 @@ import com.devscion.chapterstage.domain.model.RecentGenerationJob
 import kotlinx.serialization.json.JsonElement
 import kotlin.math.roundToInt
 
+private val WorkflowAgentOrder = listOf("structure", "brainstorm", "visual", "verifier")
+
 fun GenerationSettings.toRequest(chapterId: String): StartGenerationJobRequest =
     StartGenerationJobRequest(
         chapterId = chapterId,
@@ -33,8 +35,8 @@ fun GenerationJobStartResponse.toDomain(settings: GenerationSettings): Generatio
         status = status,
         progress = 0,
         currentStep = "Queued",
-        activeAgentId = null,
-        agentStatuses = emptyMap(),
+        activeAgentId = "structure",
+        agentStatuses = mapOf("structure" to GenerationAgentStatus.Active),
         events = emptyList(),
         elapsedSeconds = 0,
         publicUrl = null,
@@ -42,20 +44,29 @@ fun GenerationJobStartResponse.toDomain(settings: GenerationSettings): Generatio
 
 fun GenerationJobResponse.toDomain(traceEvents: List<AgentTraceEvent> = emptyList()): GenerationJob {
     val normalizedStatus = status.lowercase()
+    val activeAgentId = if (normalizedStatus == "completed") {
+        null
+    } else {
+        val completed = traceEvents.map { it.agentId }.toSet()
+        WorkflowAgentOrder.firstOrNull { it !in completed } ?: "structure"
+    }
     return GenerationJob(
         id = jobId,
         chapterId = chapterId,
         status = normalizedStatus,
         progress = progress.toProgressPercent(),
         currentStep = currentStep ?: normalizedStatus.toDisplayTitle(),
-        activeAgentId = traceEvents.lastOrNull()?.agentId,
+        activeAgentId = activeAgentId,
         agentStatuses = if (normalizedStatus == "completed") {
             traceEvents.map { it.agentId }.associateWith { GenerationAgentStatus.Completed }
         } else {
-            traceEvents.lastOrNull()?.let { latest ->
-                traceEvents.map { it.agentId }.associateWith { GenerationAgentStatus.Completed } +
-                    (latest.agentId to GenerationAgentStatus.Active)
-            } ?: emptyMap()
+            buildMap<String, GenerationAgentStatus> {
+                traceEvents.map { it.agentId }
+                    .toMutableSet()
+                    .apply { remove(activeAgentId) }
+                    .forEach { put(it, GenerationAgentStatus.Completed) }
+                activeAgentId?.let { put(it, GenerationAgentStatus.Active) }
+            }
         },
         events = traceEvents,
         elapsedSeconds = 0,
@@ -76,16 +87,17 @@ fun AgentTraceEventDto.toDomain(): AgentTraceEvent =
         message = message,
         timestamp = createdAt,
         payload = payload.toPayloadPreview(),
+        elapsedSeconds = elapsedSeconds,
     )
 
 fun RecentGenerationJobDto.toDomain(): RecentGenerationJob =
     RecentGenerationJob(
         id = jobId,
-        title = title ?: "Job ${jobId.take(8)}",
-        book = book ?: chapterId?.let { "Chapter ${it.take(8)}" } ?: "ChapterStage",
+        title = currentStep?.toDisplayTitle() ?: "Job ${jobId.take(8)}",
+        book = "Chapter ${chapterId.take(8)}",
         status = status.toUiJobStatus(),
-        style = style ?: currentStep ?: "ChapterStage",
-        updatedAt = updatedAt ?: createdAt ?: "recently",
+        style = currentStep?.toDisplayTitle() ?: status.toDisplayTitle(),
+        updatedAt = updatedAt,
         progress = progress.toProgressPercent(),
         currentStep = currentStep,
         experienceId = experienceId,

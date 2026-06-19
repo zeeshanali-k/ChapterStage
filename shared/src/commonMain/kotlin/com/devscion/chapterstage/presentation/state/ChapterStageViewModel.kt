@@ -26,6 +26,7 @@ import com.devscion.chapterstage.presentation.model.ViewerLoadState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -159,7 +160,7 @@ class ChapterStageViewModel(
                     traceErrorMessage = null,
                     snapshot = GenerationSnapshot(
                         statuses = demoContent.agents.associate { agent ->
-                            agent.id to com.devscion.chapterstage.presentation.model.AgentStatus.Waiting
+                            agent.id to AgentStatus.Waiting
                         },
                     ),
                 )
@@ -213,6 +214,20 @@ class ChapterStageViewModel(
 
     private fun observeGeneration(jobId: String) {
         generationJob = viewModelScope.launch {
+            val elapsedSeconds = MutableStateFlow(0)
+
+            val tickerJob = launch {
+                while (isActive) {
+                    delay(1_000)
+                    if (_state.value.snapshot.isComplete || _state.value.snapshot.jobId != jobId) break
+                    elapsedSeconds.value += 1
+                    _state.update { state ->
+                        if (state.snapshot.isComplete || state.snapshot.jobId != jobId) return@update state
+                        state.copy(snapshot = state.snapshot.copy(elapsedSeconds = elapsedSeconds.value))
+                    }
+                }
+            }
+
             observeGenerationEvents(jobId)
                 .catch { throwable ->
                     setError(throwable = throwable, surface = ErrorSurface.Progress)
@@ -221,11 +236,14 @@ class ChapterStageViewModel(
                 .collect { job ->
                     _state.update { state ->
                         state.copy(
-                            snapshot = job.toUiSnapshot(agents = demoContent.agents),
+                            snapshot = job.toUiSnapshot(agents = demoContent.agents)
+                                .copy(elapsedSeconds = elapsedSeconds.value),
                             progressErrorMessage = job.errorMessage,
                         )
                     }
                 }
+
+            tickerJob.cancel()
         }
     }
 
@@ -493,10 +511,12 @@ private fun RecentJobUiModel.toSnapshot(
     agents: List<com.devscion.chapterstage.presentation.model.AgentUiModel>,
 ): GenerationSnapshot {
     val isReady = status == "ready"
+    val isTerminal = isReady || status == "failed"
     val statuses = if (isReady) {
         agents.associate { it.id to AgentStatus.Completed }
     } else {
         agents.associate { it.id to AgentStatus.Waiting }
+            .let { if (isTerminal) it else it + ("structure" to AgentStatus.Active) }
     }
     return GenerationSnapshot(
         jobId = id,
@@ -504,7 +524,7 @@ private fun RecentJobUiModel.toSnapshot(
         title = title,
         subtitle = book,
         statuses = statuses,
-        activeAgentId = null,
+        activeAgentId = if (isTerminal) null else "structure",
         progress = if (isReady) 100 else progress,
         isComplete = isReady,
         publicUrl = publicUrl,
