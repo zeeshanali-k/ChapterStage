@@ -17,11 +17,16 @@ val chapterStageVersion: String = (project.findProperty("chapterstage.version") 
 // Build flavor: pass -Pflavor=prod for real API. Default is dev (mock data).
 val chapterStageFlavor: String = (project.findProperty("flavor") as? String) ?: "dev"
 val isDevFlavor: Boolean = chapterStageFlavor != "prod"
+
 val chapterStageApiBaseUrl: String =
     (project.findProperty("apiBaseUrl") as? String) ?: "http://localhost:8000/api/v1"
 
 val flavorOutputDir = layout.buildDirectory.dir("generated/source/appflavor")
 
+println("ChapterStageConfig-> chapterStageVersion: $chapterStageVersion")
+println("ChapterStageConfig-> chapterStageFlavor: $chapterStageFlavor")
+println("ChapterStageConfig-> chapterStageApiBaseUrl: $chapterStageApiBaseUrl")
+println("ChapterStageConfig-> flavorOutputDir: $flavorOutputDir")
 abstract class GenerateAppFlavorTask : DefaultTask() {
     @get:Input
     abstract val flavor: Property<String>
