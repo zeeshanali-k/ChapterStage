@@ -9,6 +9,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlin.math.roundToInt
 
+private val WorkflowAgentOrder = listOf("structure", "brainstorm", "visual", "verifier")
+
 fun ServerSentEvent.toGenerationStreamEvent(json: Json): GenerationStreamEventDto? =
     runCatching {
         json.decodeFromString<GenerationStreamEventDto>(data)
@@ -50,10 +52,6 @@ fun GenerationStreamEventDto.toDomainJob(
     val resolvedProgress = progress?.toProgressPercent()
         ?: previous?.progress
         ?: if (resolvedStatus == "completed") 100 else 0
-    val resolvedActiveAgentId = activeAgentId
-        ?: agentId
-        ?: traceEvents.lastOrNull()?.agentId
-        ?: previous?.activeAgentId
 
     return GenerationJob(
         id = this.jobId ?: previous?.id ?: jobId,
@@ -65,10 +63,9 @@ fun GenerationStreamEventDto.toDomainJob(
             ?: message?.ifBlank { null }
             ?: previous?.currentStep
             ?: "Running",
-        activeAgentId = if (resolvedStatus == "completed") null else resolvedActiveAgentId,
+        activeAgentId = resolvedActiveAgentId(status = resolvedStatus, traceEvents = traceEvents),
         agentStatuses = resolvedAgentStatuses(
             status = resolvedStatus,
-            activeAgentId = resolvedActiveAgentId,
             traceEvents = traceEvents,
             previous = previous,
         ),
@@ -81,9 +78,20 @@ fun GenerationStreamEventDto.toDomainJob(
     )
 }
 
+private fun resolvedActiveAgentId(
+    status: String,
+    traceEvents: List<AgentTraceEvent>,
+): String? {
+    if (status == "completed") return null
+    val completed = traceEvents
+        .filter { it.type == "agent_message" || it.type == "handoff" }
+        .map { it.agentId }
+        .toSet()
+    return WorkflowAgentOrder.firstOrNull { it !in completed }
+}
+
 private fun GenerationStreamEventDto.resolvedAgentStatuses(
     status: String,
-    activeAgentId: String?,
     traceEvents: List<AgentTraceEvent>,
     previous: GenerationJob?,
 ): Map<String, GenerationAgentStatus> {
@@ -96,14 +104,15 @@ private fun GenerationStreamEventDto.resolvedAgentStatuses(
             .associateWith { GenerationAgentStatus.Completed }
     }
 
-    val completed = previous?.agentStatuses
-        ?.filterValues { it == GenerationAgentStatus.Completed }
-        ?.keys
-        .orEmpty() + traceEvents.dropLast(1).map { it.agentId }
-
-    val active = activeAgentId ?: traceEvents.lastOrNull()?.agentId
-    return completed.associateWith { GenerationAgentStatus.Completed } +
-        active?.let { mapOf(it to GenerationAgentStatus.Active) }.orEmpty()
+    val completed = traceEvents
+        .filter { it.type == "agent_message" || it.type == "handoff" }
+        .map { it.agentId }
+        .toSet()
+    val active = resolvedActiveAgentId(status = status, traceEvents = traceEvents)
+    return buildMap<String, GenerationAgentStatus> {
+        completed.forEach { put(it, GenerationAgentStatus.Completed) }
+        active?.let { put(it, GenerationAgentStatus.Active) }
+    }
 }
 
 private fun String.toAgentStatus(): GenerationAgentStatus =

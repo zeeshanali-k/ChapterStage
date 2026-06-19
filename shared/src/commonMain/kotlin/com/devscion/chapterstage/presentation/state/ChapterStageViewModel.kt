@@ -511,10 +511,12 @@ private fun RecentJobUiModel.toSnapshot(
     agents: List<com.devscion.chapterstage.presentation.model.AgentUiModel>,
 ): GenerationSnapshot {
     val isReady = status == "ready"
+    val isTerminal = isReady || status == "failed"
     val statuses = if (isReady) {
         agents.associate { it.id to AgentStatus.Completed }
     } else {
         agents.associate { it.id to AgentStatus.Waiting }
+            .let { if (isTerminal) it else it + ("structure" to AgentStatus.Active) }
     }
     return GenerationSnapshot(
         jobId = id,
@@ -522,7 +524,7 @@ private fun RecentJobUiModel.toSnapshot(
         title = title,
         subtitle = book,
         statuses = statuses,
-        activeAgentId = null,
+        activeAgentId = if (isTerminal) null else "structure",
         progress = if (isReady) 100 else progress,
         isComplete = isReady,
         publicUrl = publicUrl,

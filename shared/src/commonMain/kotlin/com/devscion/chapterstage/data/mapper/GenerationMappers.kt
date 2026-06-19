@@ -17,6 +17,8 @@ import com.devscion.chapterstage.domain.model.RecentGenerationJob
 import kotlinx.serialization.json.JsonElement
 import kotlin.math.roundToInt
 
+private val WorkflowAgentOrder = listOf("structure", "brainstorm", "visual", "verifier")
+
 fun GenerationSettings.toRequest(chapterId: String): StartGenerationJobRequest =
     StartGenerationJobRequest(
         chapterId = chapterId,
@@ -42,8 +44,12 @@ fun GenerationJobStartResponse.toDomain(settings: GenerationSettings): Generatio
 
 fun GenerationJobResponse.toDomain(traceEvents: List<AgentTraceEvent> = emptyList()): GenerationJob {
     val normalizedStatus = status.lowercase()
-    val activeAgentId = traceEvents.lastOrNull()?.agentId
-        ?: if (normalizedStatus == "completed") null else "structure"
+    val activeAgentId = if (normalizedStatus == "completed") {
+        null
+    } else {
+        val completed = traceEvents.map { it.agentId }.toSet()
+        WorkflowAgentOrder.firstOrNull { it !in completed } ?: "structure"
+    }
     return GenerationJob(
         id = jobId,
         chapterId = chapterId,
