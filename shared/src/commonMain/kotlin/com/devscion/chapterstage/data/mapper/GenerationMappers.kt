@@ -33,8 +33,8 @@ fun GenerationJobStartResponse.toDomain(settings: GenerationSettings): Generatio
         status = status,
         progress = 0,
         currentStep = "Queued",
-        activeAgentId = null,
-        agentStatuses = emptyMap(),
+        activeAgentId = "structure",
+        agentStatuses = mapOf("structure" to GenerationAgentStatus.Active),
         events = emptyList(),
         elapsedSeconds = 0,
         publicUrl = null,
@@ -42,20 +42,25 @@ fun GenerationJobStartResponse.toDomain(settings: GenerationSettings): Generatio
 
 fun GenerationJobResponse.toDomain(traceEvents: List<AgentTraceEvent> = emptyList()): GenerationJob {
     val normalizedStatus = status.lowercase()
+    val activeAgentId = traceEvents.lastOrNull()?.agentId
+        ?: if (normalizedStatus == "completed") null else "structure"
     return GenerationJob(
         id = jobId,
         chapterId = chapterId,
         status = normalizedStatus,
         progress = progress.toProgressPercent(),
         currentStep = currentStep ?: normalizedStatus.toDisplayTitle(),
-        activeAgentId = traceEvents.lastOrNull()?.agentId,
+        activeAgentId = activeAgentId,
         agentStatuses = if (normalizedStatus == "completed") {
             traceEvents.map { it.agentId }.associateWith { GenerationAgentStatus.Completed }
         } else {
-            traceEvents.lastOrNull()?.let { latest ->
-                traceEvents.map { it.agentId }.associateWith { GenerationAgentStatus.Completed } +
-                    (latest.agentId to GenerationAgentStatus.Active)
-            } ?: emptyMap()
+            buildMap<String, GenerationAgentStatus> {
+                traceEvents.map { it.agentId }
+                    .toMutableSet()
+                    .apply { remove(activeAgentId) }
+                    .forEach { put(it, GenerationAgentStatus.Completed) }
+                activeAgentId?.let { put(it, GenerationAgentStatus.Active) }
+            }
         },
         events = traceEvents,
         elapsedSeconds = 0,

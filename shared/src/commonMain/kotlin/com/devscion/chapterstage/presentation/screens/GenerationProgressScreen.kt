@@ -20,10 +20,13 @@ import com.devscion.chapterstage.design.spacing
 import com.devscion.chapterstage.presentation.components.StageInlineError
 import com.devscion.chapterstage.presentation.components.StageScreen
 import com.devscion.chapterstage.presentation.components.StageTopBar
+import com.devscion.chapterstage.presentation.model.AgentStatus
 import com.devscion.chapterstage.presentation.model.AgentUiModel
 import com.devscion.chapterstage.presentation.model.ChapterStageDemoContent
 import com.devscion.chapterstage.presentation.model.GenerationSettingsDraft
 import com.devscion.chapterstage.presentation.model.GenerationSnapshot
+
+private val WorkflowAgentOrder = listOf("structure", "brainstorm", "visual", "verifier")
 
 @Composable
 fun GenerationProgressScreen(
@@ -40,7 +43,20 @@ fun GenerationProgressScreen(
     modifier: Modifier = Modifier,
 ) {
     val spacing = MaterialTheme.spacing
+    val workflowAgents = agents.filter { it.id in WorkflowAgentOrder }
     val agentById = agents.associateBy { it.id }
+    val displaySnapshot = if (snapshot.isComplete) {
+        snapshot
+    } else {
+        snapshot.copy(
+            activeAgentId = snapshot.activeAgentId ?: "structure",
+            statuses = if (snapshot.activeAgentId == null) {
+                snapshot.statuses + ("structure" to AgentStatus.Active)
+            } else {
+                snapshot.statuses
+            },
+        )
+    }
 
     StageScreen(modifier = modifier) { layout ->
         StageTopBar(
@@ -80,12 +96,12 @@ fun GenerationProgressScreen(
                         .widthIn(max = spacing.maxPaneWidth),
                     verticalArrangement = Arrangement.spacedBy(spacing.medium),
                 ) {
-                    ProgressOverviewCard(agents = agents, snapshot = snapshot)
+                    ProgressOverviewCard(agents = workflowAgents, snapshot = displaySnapshot)
                     GenerationStageCardSwitcher(
-                        agents = agents,
-                        snapshot = snapshot,
+                        agents = workflowAgents,
+                        snapshot = displaySnapshot,
                         settings = settings,
-                        publicUrl = snapshot.publicUrl,
+                        publicUrl = displaySnapshot.publicUrl,
                         onOpenViewer = onOpenViewer,
                         onViewTrace = onViewTrace,
                     )
@@ -99,12 +115,12 @@ fun GenerationProgressScreen(
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(spacing.medium)) {
-                ProgressOverviewCard(agents = agents, snapshot = snapshot)
+                ProgressOverviewCard(agents = workflowAgents, snapshot = displaySnapshot)
                 GenerationStageCardSwitcher(
-                    agents = agents,
-                    snapshot = snapshot,
+                    agents = workflowAgents,
+                    snapshot = displaySnapshot,
                     settings = settings,
-                    publicUrl = snapshot.publicUrl,
+                    publicUrl = displaySnapshot.publicUrl,
                     onOpenViewer = onOpenViewer,
                     onViewTrace = onViewTrace,
                 )

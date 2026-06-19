@@ -63,12 +63,21 @@ fun GenerationJob.toUiSnapshot(agents: List<AgentUiModel>): GenerationSnapshot {
         val status = agentStatuses[agent.id]?.toUiStatus() ?: AgentStatus.Waiting
         agent.id to status
     }
+    val effectiveActiveAgentId = activeAgentId ?: if (!isComplete) "structure" else null
+    val finalStatuses = if (
+        effectiveActiveAgentId != null &&
+        resolvedStatuses[effectiveActiveAgentId] == AgentStatus.Waiting
+    ) {
+        resolvedStatuses + (effectiveActiveAgentId to AgentStatus.Active)
+    } else {
+        resolvedStatuses
+    }
 
     return GenerationSnapshot(
         jobId = id,
         experienceId = experienceId,
-        statuses = resolvedStatuses,
-        activeAgentId = activeAgentId,
+        statuses = finalStatuses,
+        activeAgentId = effectiveActiveAgentId,
         events = events.map { it.toUiModel() },
         progress = progress,
         elapsedSeconds = elapsedSeconds,

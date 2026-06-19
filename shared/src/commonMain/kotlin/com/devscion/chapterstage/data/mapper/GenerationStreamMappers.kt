@@ -22,6 +22,7 @@ fun GenerationStreamEventDto.toTraceEvent(
     val resolvedMessage = message ?: error?.message ?: status
 
     if (resolvedTitle == null && resolvedMessage == null) return null
+    if (agentName == null && agentId == null && activeAgentId == null) return null
 
     val resolvedAgentName = agentName ?: activeAgentId?.toDisplayTitle() ?: "Agent"
     val resolvedAgentId = agentId ?: activeAgentId ?: resolvedAgentName.toAgentId()
