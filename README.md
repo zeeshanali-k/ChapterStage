@@ -1,5 +1,30 @@
 This is a Kotlin Multiplatform project targeting Android, iOS, Web, Desktop (JVM).
 
+It pairs with the **ChapterStage backend** at:
+https://github.com/humilityisavirtue-collab/the-cell-on-band
+
+The agent orchestration uses the [Band](https://band.ai) platform to route work between specialist agents.
+
+Generated for the **[Band of Agents Hackathon](https://lablab.ai/ai-hackathons/band-of-agents-hackathon)**.
+
+### Stack
+
+- **Kotlin Multiplatform** with **Compose Multiplatform** for shared UI across Android, iOS, Web (JS/Wasm), and Desktop (JVM).
+- **Ktor** for HTTP and Server-Sent Events (SSE).
+- **Koin** for dependency injection.
+- **Kotlinx Serialization** for JSON handling.
+
+### Functionality
+
+ChapterStage turns a book chapter into an interactive learning experience. The app lets you:
+
+- Paste chapter text or upload a PDF/TXT file.
+- Configure generation settings (audience level, experience style, screen count).
+- Watch a live **Band of Agents** workflow (`structure → brainstorm → visual → verifier`) generate the experience in real time, with a live trace and timer.
+- Inspect the full agent trace, including expandable payloads showing what was sent to each agent.
+- Open the generated interactive chapter in an embedded viewer.
+- Browse and resume recent generation jobs.
+
 * [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
   you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
 
