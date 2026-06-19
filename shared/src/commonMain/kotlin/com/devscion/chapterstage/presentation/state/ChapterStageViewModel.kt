@@ -159,7 +159,7 @@ class ChapterStageViewModel(
                     traceErrorMessage = null,
                     snapshot = GenerationSnapshot(
                         statuses = demoContent.agents.associate { agent ->
-                            agent.id to com.devscion.chapterstage.presentation.model.AgentStatus.Waiting
+                            agent.id to AgentStatus.Waiting
                         },
                     ),
                 )

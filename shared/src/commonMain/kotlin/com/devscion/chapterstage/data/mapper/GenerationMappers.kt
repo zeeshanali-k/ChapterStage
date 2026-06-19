@@ -81,11 +81,11 @@ fun AgentTraceEventDto.toDomain(): AgentTraceEvent =
 fun RecentGenerationJobDto.toDomain(): RecentGenerationJob =
     RecentGenerationJob(
         id = jobId,
-        title = title ?: "Job ${jobId.take(8)}",
-        book = book ?: chapterId?.let { "Chapter ${it.take(8)}" } ?: "ChapterStage",
+        title = currentStep?.toDisplayTitle() ?: "Job ${jobId.take(8)}",
+        book = "Chapter ${chapterId.take(8)}",
         status = status.toUiJobStatus(),
-        style = style ?: currentStep ?: "ChapterStage",
-        updatedAt = updatedAt ?: createdAt ?: "recently",
+        style = currentStep?.toDisplayTitle() ?: status.toDisplayTitle(),
+        updatedAt = updatedAt,
         progress = progress.toProgressPercent(),
         currentStep = currentStep,
         experienceId = experienceId,
