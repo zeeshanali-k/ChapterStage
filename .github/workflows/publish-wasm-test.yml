@@ -1,0 +1,70 @@
+name: Publish Wasm JS (test mode)
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Wasm JS (dev / mock-data flavor)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build Wasm JS distribution in test mode
+        # flavor=dev forces USE_MOCK_DATA=true so the app works without a published backend.
+        run: |
+          ./gradlew :webApp:wasmJsBrowserDevelopmentExecutableDistribution \
+            -Pflavor=dev \
+            -PapiBaseUrl=http://localhost:8000/api/v1 \
+            --no-daemon \
+            --stacktrace
+
+      - name: Inspect generated AppFlavor
+        run: cat shared/build/generated/source/appflavor/com/devscion/chapterstage/AppFlavor.kt
+
+      - name: Disable Jekyll processing on GitHub Pages
+        run: touch webApp/build/dist/wasmJs/developmentExecutable/.nojekyll
+
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: webApp/build/dist/wasmJs/developmentExecutable
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
